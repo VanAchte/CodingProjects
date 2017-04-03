@@ -22,7 +22,8 @@ public class readImage {
 	 * the image and the getIntensity and getColorCode methods are called.
 	 */
 	public readImage() {
-		while (imageCount < 100) {
+		
+		while (imageCount < 101) {
 			// // the line that reads the image file
 			// ///////////////////
 			// ///your code///
@@ -30,14 +31,7 @@ public class readImage {
 			BufferedImage img = null;
 			try {
 				img = ImageIO
-						.read(new File("src/image/" + imageCount + ".jpg")); // Get
-																				// the
-																				// image
-																				// file
-																				// from
-																				// the
-																				// folder
-
+						.read(new File("src/image/" + imageCount + ".jpg"));
 				int[][] pixelData = new int[img.getHeight() * img.getWidth()][3];
 				int[] rgb;
 				System.out.println("Image height = " + img.getHeight()
@@ -46,10 +40,7 @@ public class readImage {
 				for (int i = 0; i < img.getHeight(); i++) {
 					for (int j = 0; j < img.getWidth(); j++) {
 						rgb = getPixelData(img, j, i);
-						double intensity = computeIntensity(rgb[0], rgb[1], // Get
-																			// the
-																			// intensity
-								rgb[2]);
+						double intensity = computeIntensity(rgb[0], rgb[1], rgb[2]);
 						addToBins((int) intensity); // Add intensity to bins
 						addToBinsCC(rgb[0], rgb[1], rgb[2]); // Add color code
 																// to CC bins
@@ -61,27 +52,27 @@ public class readImage {
 					}
 				}
 
+				
 				// ///////////////////////////////////
 				int totalPixels = 0;
-				for (int q = 1; q < 26; q++) { // Start at 1 for first bin with
-												// values, end at bin 25
-					
-					intensityMatrix[imageCount][q] = intensityBins[q];
+				for (int q = 1; q < 26; q++) { // Start at 0 for first bin with
+												// values, end at bin 24
+					intensityMatrix[imageCount - 1][q] = intensityBins[q];
 					intensityBins[q] = 0; // Reset values to 0 in the bins
-					System.out.println("intensityMatrix[imageCount][q] = "
-							+ intensityMatrix[imageCount][q]);
-					totalPixels += intensityMatrix[imageCount][q];
+					System.out.println("intensityMatrix[" + (imageCount-1) + "][" + q + "]"
+							+ intensityMatrix[imageCount-1][q]);
+					totalPixels += intensityMatrix[imageCount-1][q];
 				}
-				intensityMatrix[imageCount][0] = totalPixels;
+				intensityMatrix[imageCount-1][0] = totalPixels;
 				System.out.println(totalPixels);
 				totalPixels = 0;
 
 				for (int q = 0; q < 64; q++) {
-					colorCodeMatrix[imageCount][q] = colorCodeBins[q]; // Write CC bins into CC matrix
+					colorCodeMatrix[imageCount-1][q] = colorCodeBins[q]; // Write CC bins into CC matrix
 					totalPixels += colorCodeBins[q];
 					colorCodeBins[q] = 0; // Reset values for the next iteration
 				}
-				colorCodeMatrix[imageCount][64] = totalPixels;
+				colorCodeMatrix[imageCount-1][64] = totalPixels;
 
 			} catch (IOException e) {
 				System.out.println("Error occurred when reading the file.");
@@ -101,13 +92,7 @@ public class readImage {
 		int[] transCC = new int[6]; // Set transCC size to 6 for 2 bits from
 									// each color to be added together
 		transCC = setTransCC(transCC, redBinary, greenBinary, blueBinary);
-		// System.out.println("Red = " + red + " Green = " + green + " Blue = "
-		// + blue);
-		// System.out.print("transCC[] = ");
-		// for (int i = 0; i < 6; i++) {
-		// System.out.print(transCC[i]);
-		// }
-		// System.out.println();
+
 		int decimalRep = binaryToDecimal(transCC); // Convert the transformed CC
 													// number to the 6 bit
 													// decimal number
@@ -246,14 +231,11 @@ public class readImage {
 
 			int size = 100;
 
-			for (int i = 1; i < size; i++) {
+			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < 65; j++) {
 					String toPrint = "" + (int) colorCodeMatrix[i][j];
 					bufferedWriter.write(toPrint);
 					bufferedWriter.write(" ");
-//					if (j < 63) {
-//						bufferedWriter.write(", ");
-//					}
 				}
 				bufferedWriter.newLine();
 			}
@@ -279,7 +261,7 @@ public class readImage {
 
 			int size = 100;
 			int totalPixels = 0;
-			for (int i = 1; i < size; i++) {
+			for (int i = 0; i < size; i++) {
 				for (int j = 0; j < 26; j++) {
 					String toPrint = "" + (int) intensityMatrix[i][j];
 					bufferedWriter.write(toPrint);

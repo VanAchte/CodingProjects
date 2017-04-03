@@ -87,6 +87,8 @@ public class CBIR extends JFrame {
 			int pic = (picNo - 1);
 			int picIntensity = 0;
 			double picSize = imageSize[pic];
+		    
+			
 			// ///////////////////
 			// /your code///
 			// ///////////////
@@ -204,7 +206,7 @@ public class CBIR extends JFrame {
 		} catch (FileNotFoundException EE) {
 			System.out.println("The file intensity.txt does not exist");
 		}
-
+    System.out.println();
 	}
 
 	/*
@@ -353,7 +355,6 @@ public class CBIR extends JFrame {
 					imageCount--;
 
 				}
-
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
@@ -383,10 +384,19 @@ public class CBIR extends JFrame {
 			int pic = (picNo - 1);
 			int picIntensity = 0;
 			double picSize = imageSize[pic];
+			System.out.println("pic = " + pic + " compareImage = " + compareImage);
 
+			for (int i = 0; i < 100; i++) {
+				for (int j = 1; j < 26; j++) {
+					intensityMatrix[i][j] = 2.3;
+				}
+			}
+
+            //distance[pic] = 
 			// ///////////////////
 			// /your code///
 			// ///////////////
+			
 
 		}
 	}
