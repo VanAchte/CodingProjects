@@ -49,7 +49,7 @@ public class CBIR extends JFrame {
 	private JPanel panelTop;
 	private JPanel buttonPanel;
 	private Double[][] intensityMatrix = new Double[101][26];
-	private Double[][] colorCodeMatrix = new Double[100][64];
+	private Double[][] colorCodeMatrix = new Double[100][65];
 	private Map<Double, LinkedList<Integer>> map;
 	int picNo = 0;
 	int imageCount = 1; // keeps up with the number of images displayed since
@@ -65,18 +65,17 @@ public class CBIR extends JFrame {
 			}
 		});
 	}
-	
+
 	/*
 	 * This class implements an ActionListener when the user selects the
 	 * colorCode button. The image number that the user would like to find
 	 * similar images for is stored in the variable pic. pic takes the image
-	 * number associated with the image selected and subtracts one to
-	 * account for the fact that the intensityMatrix starts with zero and
-	 * not one. The size of the image is retrieved from the imageSize array.
-	 * The selected image's intensity bin values are compared to all the
-	 * other image's intensity bin values and a score is determined for how
-	 * well the images compare. The images are then arranged from most
-	 * similar to the least.
+	 * number associated with the image selected and subtracts one to account
+	 * for the fact that the intensityMatrix starts with zero and not one. The
+	 * size of the image is retrieved from the imageSize array. The selected
+	 * image's intensity bin values are compared to all the other image's
+	 * intensity bin values and a score is determined for how well the images
+	 * compare. The images are then arranged from most similar to the least.
 	 */
 	private class colorCodeHandler implements ActionListener {
 
@@ -93,6 +92,7 @@ public class CBIR extends JFrame {
 			// ///////////////
 		}
 	}
+
 	public CBIR() {
 		// The following lines set up the interface including the layout of the
 		// buttons and JPanels.
@@ -167,18 +167,40 @@ public class CBIR extends JFrame {
 	 * intensityMatrix.
 	 */
 	public void readIntensityFile() {
-		// System.out.println("Hello");
+
 		StringTokenizer token;
 		Scanner read;
 		Double intensityBin;
 		String line = "";
 		int lineNumber = 0;
 		try {
-			read = new Scanner(new File("intensity.txt"));
+			read = new Scanner(new File("src/intensity.txt"));
 
 			// ///////////////////
 			// /your code///
 			// ///////////////
+			while (read.hasNextLine()) {          // Run through every line in the file
+				int binCount = 0;                 // Keep track of when we are accessing the next bin
+				while (read.hasNextInt()) {       // Keep reading in the pixel values in the bin till the line is empty
+					if (binCount == 0) {
+						imageSize[lineNumber+1] = read.nextDouble();
+						binCount++;
+					} else {
+
+						double i = read.nextDouble();
+						System.out.println(i);
+						intensityMatrix[lineNumber][binCount] = i;
+						binCount++;
+						if (binCount % 26 == 0) {
+							lineNumber++;
+							binCount = 0;
+
+						}
+					}
+				}
+				line = read.nextLine();
+			}
+
 		} catch (FileNotFoundException EE) {
 			System.out.println("The file intensity.txt does not exist");
 		}
@@ -195,15 +217,38 @@ public class CBIR extends JFrame {
 		StringTokenizer token;
 		Scanner read;
 		Double colorCodeBin;
+		String line = "";
 		int lineNumber = 0;
 		try {
-			read = new Scanner(new File("colorCodes.txt"));
+			read = new Scanner(new File("src/colorCodes.txt"));
 
 			// ///////////////////
 			// /your code///
 			// ///////////////
+
+			while (read.hasNextLine()) {          // Run through every line in the file
+				int binCount = 0;                 // Keep track of when we are accessing the next bin
+				while (read.hasNextInt()) {       // Keep reading in the pixel values in the bin till the line is empty
+					if (binCount == 65) {
+						imageSize[lineNumber+1] = read.nextDouble();
+						binCount++;
+					} else {
+
+						double i = read.nextDouble();
+						System.out.println(i);
+						colorCodeMatrix[lineNumber][binCount] = i;
+						binCount++;
+						if (binCount % 65 == 0) {
+							lineNumber++;
+							binCount = 0;
+
+						}
+					}
+				}
+				line = read.nextLine();
+			}
 		} catch (FileNotFoundException EE) {
-			System.out.println("The file intensity.txt does not exist");
+			System.out.println("The file colorCodes.txt does not exist");
 		}
 
 	}
