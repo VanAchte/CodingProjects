@@ -388,9 +388,19 @@ public class CBIR extends JFrame {
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 26; j++) {
-					intensityMatrix[i][j] = 2.3;
+					System.out.println("intensityMatrix[" + pic + "][" + j + "] = " + intensityMatrix[pic][j]);
+					System.out.println("imageSize[" + pic + "] = " + imageSize[pic]);
+					System.out.println("intensityMatrix[" + pic + "][" + j + "] / imageSize[" + i + "] = " + (intensityMatrix[pic][j] / imageSize[pic]));
+					System.out.println(" intensityMatrix[" + i + "][" + j + "] / imageSize[" + i + "] = " + (intensityMatrix[i][j] / imageSize[i+1]));
+					d += Math.abs((intensityMatrix[pic][j] / imageSize[pic]) - (intensityMatrix[i][j] / imageSize[i+1]));
 				}
+				distance[pic] = d;
+				d = 0;
 			}
+//			distance[pic] = d;
+//			System.out.println("distance = " + d);
+//			d = 0;
+
 
             //distance[pic] = 
 			// ///////////////////
