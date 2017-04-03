@@ -92,6 +92,18 @@ public class CBIR extends JFrame {
 			// ///////////////////
 			// /your code///
 			// ///////////////
+			
+			for (int i = 0; i < 100; i++) {
+				for (int j = 1; j < 26; j++) {
+					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] = " + colorCodeMatrix[pic][j]);
+					System.out.println("imageSize[" + pic + "] = " + imageSize[pic]);
+					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] / imageSize[" + i + "] = " + (colorCodeMatrix[pic][j] / imageSize[pic]));
+					System.out.println(" colorCodeMatrix[" + i + "][" + j + "] / imageSize[" + i + "] = " + (colorCodeMatrix[i][j] / imageSize[i+1]));
+					d += Math.abs((colorCodeMatrix[pic][j] / imageSize[pic]) - (colorCodeMatrix[i][j] / imageSize[i+1]));
+				}
+				distance[pic] = d;
+				d = 0;
+			}
 		}
 	}
 
