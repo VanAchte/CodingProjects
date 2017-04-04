@@ -51,6 +51,7 @@ public class CBIR extends JFrame {
 	private Double[][] intensityMatrix = new Double[100][26];
 	private Double[][] colorCodeMatrix = new Double[100][65];
 	private Map<Double, Integer> distanceMap;
+	private Map<Double, Integer> distanceMap2;
 	int picNo = 0;
 	int imageCount = 1; // keeps up with the number of images displayed since
 						// the first page.
@@ -81,7 +82,7 @@ public class CBIR extends JFrame {
 
 		public void actionPerformed(ActionEvent e) {
 			double[] distance = new double[101];
-			distanceMap = new HashMap<Double, Integer>();
+			distanceMap2 = new HashMap<Double, Integer>();
 			double d = 0;
 			int compareImage = 0;
 			int pic = (picNo - 1);
@@ -89,7 +90,7 @@ public class CBIR extends JFrame {
 			double picSize = imageSize[pic];
 
 			for (int i = 0; i < 100; i++) {
-				for (int j = 1; j < 65; j++) {
+				for (int j = 0; j < 64; j++) {
 
 					double test = (colorCodeMatrix[pic][j] / imageSize[pic]) - (colorCodeMatrix[i][j] / imageSize[i+1]);
 					
@@ -99,7 +100,7 @@ public class CBIR extends JFrame {
 				}
 				
 				distance[i+1] = d;
-				distanceMap.put(d, i+1);
+				distanceMap2.put(d, i+1);
 				d = 0;
 			}
 
@@ -111,8 +112,8 @@ public class CBIR extends JFrame {
 		
 			for (int i = 1; i < 101; i++) {
 				ImageIcon icon;
-				int test = distanceMap.get(distance[i]);
-				icon = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
+				int test = distanceMap2.get(distance[i]);
+				icon = new ImageIcon(getClass().getResource("image/" + distanceMap2.get(distance[i]) + ".jpg"));
 
 				if (icon != null) {
 					
