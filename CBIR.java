@@ -87,23 +87,48 @@ public class CBIR extends JFrame {
 			int pic = (picNo - 1);
 			int picIntensity = 0;
 			double picSize = imageSize[pic];
-		    
-			
+
+			for (int i = 0; i < 100; i++) {
+				for (int j = 1; j < 65; j++) {
+
+					double test = (colorCodeMatrix[pic][j] / imageSize[pic]) - (colorCodeMatrix[i][j] / imageSize[i+1]);
+					
+					test = Math.abs(test);
+					d += Math.abs((colorCodeMatrix[pic][j] / imageSize[pic+1]) - (colorCodeMatrix[i][j] / imageSize[i+1]));
+					System.out.println(d);
+				}
+				
+				distance[i+1] = d;
+				distanceMap.put(d, i+1);
+				d = 0;
+			}
+
+			Arrays.sort(distance);
+			for(int i = 0; i < 101; i++) {
+				System.out.println(distance[i]);
+				
+			}
+		
+			for (int i = 1; i < 101; i++) {
+				ImageIcon icon;
+				int test = distanceMap.get(distance[i]);
+				icon = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
+
+				if (icon != null) {
+					
+					button[i] = new JButton(icon);
+					// panelBottom1.add(button[i]);
+					button[i].addActionListener(new IconButtonHandler(i, icon));
+					buttonOrder[i] = i;
+				}
+			}
+			displayFirstPage();
+
 			// ///////////////////
 			// /your code///
 			// ///////////////
 			
-			for (int i = 0; i < 100; i++) {
-				for (int j = 0; j < 65; j++) {
-					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] = " + colorCodeMatrix[pic][j]);
-					System.out.println("imageSize[" + pic + "] = " + imageSize[pic]);
-					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] / imageSize[" + i + "] = " + (colorCodeMatrix[pic][j] / imageSize[pic]));
-					System.out.println(" colorCodeMatrix[" + i + "][" + j + "] / imageSize[" + i + "] = " + (colorCodeMatrix[i][j] / imageSize[i+1]));
-					d += Math.abs((colorCodeMatrix[pic][j] / imageSize[pic]) - (colorCodeMatrix[i][j] / imageSize[i+1]));
-				}
-				distance[pic] = d;
-				d = 0;
-			}
+
 		}
 	}
 
@@ -396,45 +421,28 @@ public class CBIR extends JFrame {
 			int pic = (picNo - 1);
 			int picIntensity = 0;
 			double picSize = imageSize[pic];
-			System.out.println("pic = " + pic + " compareImage = " + compareImage);
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 26; j++) {
-//					System.out.println("intensityMatrix[" + pic + "][" + j + "] = " + intensityMatrix[pic][j]);
-//					System.out.println("intensityMatrix[" + i + "][" + j + "] = " + intensityMatrix[i][j]);
-//					System.out.println("imageSize[" + (pic+1) + "] = " + imageSize[pic+1]);
-//					System.out.println("intensityMatrix[" + pic + "][" + j + "] / imageSize[" + (i+1) + "] = " + (intensityMatrix[pic][j] / imageSize[pic]));
-//					System.out.println();
-//					System.out.println(" intensityMatrix[" + (i) + "][" + j + "] / imageSize[" + (i+1) + "] = " + (intensityMatrix[i+1][j] / imageSize[i+1]));
-//					System.out.println(" intensityMatrix[" + pic + "][" + j + "] / imageSize[" + (pic+1) + "] = " + (intensityMatrix[i][j] / imageSize[i+1]));
-					double firstTerm = intensityMatrix[pic][j] / imageSize[pic+1];
-					double secondTerm = intensityMatrix[i][j] / imageSize[i+1];
+
 					double test = (intensityMatrix[pic][j] / imageSize[pic]) - (intensityMatrix[i][j] / imageSize[i+1]);
 					
 					test = Math.abs(test);
-					//System.out.println(test);
 					d += Math.abs((intensityMatrix[pic][j] / imageSize[pic+1]) - (intensityMatrix[i][j] / imageSize[i+1]));
 					System.out.println(d);
 				}
 				
 				distance[i+1] = d;
-				distanceMap.put(d, i);
+				distanceMap.put(d, i+1);
 				d = 0;
 			}
-			//Arrays.sort(distance);
-//			for(int i = 0; i < 101; i++) {
-//				System.out.println(distance[i]);
-//			}
+
 			Arrays.sort(distance);
 			for(int i = 0; i < 101; i++) {
 				System.out.println(distance[i]);
 				
 			}
-//			for(int i = 1; i < 21; i++) {
-//				buttonOrder[i] = distanceMap.get(distance[i]);
-//				
-//			}
-			
+		
 			for (int i = 1; i < 101; i++) {
 				ImageIcon icon;
 				int test = distanceMap.get(distance[i]);
@@ -449,12 +457,7 @@ public class CBIR extends JFrame {
 				}
 			}
 			displayFirstPage();
-//			distance[pic] = d;
-//			System.out.println("distance = " + d);
-//			d = 0;
 
-
-            //distance[pic] = 
 			// ///////////////////
 			// /your code///
 			// ///////////////
