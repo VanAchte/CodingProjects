@@ -266,9 +266,6 @@ public class readImage {
 					String toPrint = "" + (int) intensityMatrix[i][j];
 					bufferedWriter.write(toPrint);
 					bufferedWriter.write(" ");
-//					if (j < 25) {
-//						bufferedWriter.write(", ");
-//					}
 				}
 				bufferedWriter.newLine();
 			}

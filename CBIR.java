@@ -48,9 +48,9 @@ public class CBIR extends JFrame {
 	private JPanel panelBottom2;
 	private JPanel panelTop;
 	private JPanel buttonPanel;
-	private Double[][] intensityMatrix = new Double[101][26];
+	private Double[][] intensityMatrix = new Double[100][26];
 	private Double[][] colorCodeMatrix = new Double[100][65];
-	private Map<Double, LinkedList<Integer>> map;
+	private Map<Double, Integer> distanceMap;
 	int picNo = 0;
 	int imageCount = 1; // keeps up with the number of images displayed since
 						// the first page.
@@ -81,7 +81,7 @@ public class CBIR extends JFrame {
 
 		public void actionPerformed(ActionEvent e) {
 			double[] distance = new double[101];
-			map = new HashMap<Double, LinkedList<Integer>>();
+			distanceMap = new HashMap<Double, Integer>();
 			double d = 0;
 			int compareImage = 0;
 			int pic = (picNo - 1);
@@ -94,7 +94,7 @@ public class CBIR extends JFrame {
 			// ///////////////
 			
 			for (int i = 0; i < 100; i++) {
-				for (int j = 1; j < 26; j++) {
+				for (int j = 0; j < 65; j++) {
 					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] = " + colorCodeMatrix[pic][j]);
 					System.out.println("imageSize[" + pic + "] = " + imageSize[pic]);
 					System.out.println("colorCodeMatrix[" + pic + "][" + j + "] / imageSize[" + i + "] = " + (colorCodeMatrix[pic][j] / imageSize[pic]));
@@ -390,7 +390,7 @@ public class CBIR extends JFrame {
 
 		public void actionPerformed(ActionEvent e) {
 			double[] distance = new double[101];
-			map = new HashMap<Double, LinkedList<Integer>>();
+			distanceMap = new HashMap<Double, Integer>();
 			double d = 0;
 			int compareImage = 0;
 			int pic = (picNo - 1);
@@ -400,15 +400,55 @@ public class CBIR extends JFrame {
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 26; j++) {
-					System.out.println("intensityMatrix[" + pic + "][" + j + "] = " + intensityMatrix[pic][j]);
-					System.out.println("imageSize[" + pic + "] = " + imageSize[pic]);
-					System.out.println("intensityMatrix[" + pic + "][" + j + "] / imageSize[" + i + "] = " + (intensityMatrix[pic][j] / imageSize[pic]));
-					System.out.println(" intensityMatrix[" + i + "][" + j + "] / imageSize[" + i + "] = " + (intensityMatrix[i][j] / imageSize[i+1]));
-					d += Math.abs((intensityMatrix[pic][j] / imageSize[pic]) - (intensityMatrix[i][j] / imageSize[i+1]));
+//					System.out.println("intensityMatrix[" + pic + "][" + j + "] = " + intensityMatrix[pic][j]);
+//					System.out.println("intensityMatrix[" + i + "][" + j + "] = " + intensityMatrix[i][j]);
+//					System.out.println("imageSize[" + (pic+1) + "] = " + imageSize[pic+1]);
+//					System.out.println("intensityMatrix[" + pic + "][" + j + "] / imageSize[" + (i+1) + "] = " + (intensityMatrix[pic][j] / imageSize[pic]));
+//					System.out.println();
+//					System.out.println(" intensityMatrix[" + (i) + "][" + j + "] / imageSize[" + (i+1) + "] = " + (intensityMatrix[i+1][j] / imageSize[i+1]));
+//					System.out.println(" intensityMatrix[" + pic + "][" + j + "] / imageSize[" + (pic+1) + "] = " + (intensityMatrix[i][j] / imageSize[i+1]));
+					double firstTerm = intensityMatrix[pic][j] / imageSize[pic+1];
+					double secondTerm = intensityMatrix[i][j] / imageSize[i+1];
+					double test = (intensityMatrix[pic][j] / imageSize[pic]) - (intensityMatrix[i][j] / imageSize[i+1]);
+					
+					test = Math.abs(test);
+					//System.out.println(test);
+					d += Math.abs((intensityMatrix[pic][j] / imageSize[pic+1]) - (intensityMatrix[i][j] / imageSize[i+1]));
+					System.out.println(d);
 				}
-				distance[pic] = d;
+				
+				distance[i+1] = d;
+				distanceMap.put(d, i);
 				d = 0;
 			}
+			//Arrays.sort(distance);
+//			for(int i = 0; i < 101; i++) {
+//				System.out.println(distance[i]);
+//			}
+			Arrays.sort(distance);
+			for(int i = 0; i < 101; i++) {
+				System.out.println(distance[i]);
+				
+			}
+//			for(int i = 1; i < 21; i++) {
+//				buttonOrder[i] = distanceMap.get(distance[i]);
+//				
+//			}
+			
+			for (int i = 1; i < 101; i++) {
+				ImageIcon icon;
+				int test = distanceMap.get(distance[i]);
+				icon = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
+
+				if (icon != null) {
+					
+					button[i] = new JButton(icon);
+					// panelBottom1.add(button[i]);
+					button[i].addActionListener(new IconButtonHandler(i, icon));
+					buttonOrder[i] = i;
+				}
+			}
+			displayFirstPage();
 //			distance[pic] = d;
 //			System.out.println("distance = " + d);
 //			d = 0;
