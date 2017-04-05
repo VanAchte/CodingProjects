@@ -45,7 +45,7 @@ public class CBIR extends JFrame {
 	private GridLayout gridLayout3;
 	private GridLayout gridLayout4;
 	private JPanel panelBottom1;
-	private JPanel panelBottom2;
+	//private JPanel panelBottom2;
 	private JPanel panelTop;
 	private JPanel buttonPanel;
 	private Double[][] intensityMatrix = new Double[100][26];
@@ -139,7 +139,7 @@ public class CBIR extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setTitle("Icon Demo: Please Select an Image");
 		panelBottom1 = new JPanel();
-		panelBottom2 = new JPanel();
+		//panelBottom2 = new JPanel();
 		panelTop = new JPanel();
 		buttonPanel = new JPanel();
 		gridLayout1 = new GridLayout(4, 5, 5, 5);
@@ -148,7 +148,7 @@ public class CBIR extends JFrame {
 		gridLayout4 = new GridLayout(2, 3, 5, 5);
 		setLayout(gridLayout2);
 		panelBottom1.setLayout(gridLayout1);
-		panelBottom2.setLayout(gridLayout1);
+		//panelBottom2.setLayout(gridLayout1);
 		panelTop.setLayout(gridLayout3);
 		add(panelTop);
 		add(panelBottom1);
@@ -450,12 +450,32 @@ public class CBIR extends JFrame {
 				icon = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
 
 				if (icon != null) {
-					
 					button[i] = new JButton(icon);
 					// panelBottom1.add(button[i]);
 					button[i].addActionListener(new IconButtonHandler(i, icon));
 					buttonOrder[i] = i;
+					//panelBottom1.add(button[i]);
 				}
+			}
+			
+			int imageButNo = 0;
+			int startImage = imageCount - 40;
+			int endImage = imageCount - 20;
+			if (startImage >= 1) {
+				panelBottom1.removeAll();
+				/*
+				 * The for loop goes through the buttonOrder array starting with
+				 * the startImage value and retrieves the image at that place
+				 * and then adds the button to the panelBottom1.
+				 */
+				for (int i = startImage; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					imageCount--;
+
+				}
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
 			}
 			displayFirstPage();
 
