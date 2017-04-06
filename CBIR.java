@@ -123,6 +123,18 @@ public class CBIR extends JFrame {
 					buttonOrder[i] = i;
 				}
 			}
+			
+			int imageButNo = 0;
+			panelBottom1.removeAll();
+			for (int i = 1; i < 21; i++) {
+				//System.out.println(button[i]);
+				imageButNo = buttonOrder[i];
+				panelBottom1.add(button[imageButNo]);
+				//imageCount++;
+			}
+			panelBottom1.revalidate();
+			panelBottom1.repaint();
+			
 			//displayFirstPage();
 
 			// ///////////////////
@@ -443,7 +455,7 @@ public class CBIR extends JFrame {
 				System.out.println(distance[i]);
 				
 			}
-		
+			
 			for (int i = 1; i < 101; i++) {
 				ImageIcon icon;
 				int test = distanceMap.get(distance[i]);
@@ -457,10 +469,19 @@ public class CBIR extends JFrame {
 					panelBottom1.add(button[i]);
 				}
 			}
-			//test
 			int imageButNo = 0;
-			int startImage = imageCount; // test
-			int endImage = imageCount;   // test
+			panelBottom1.removeAll();
+			for (int i = 1; i < 21; i++) {
+				//System.out.println(button[i]);
+				imageButNo = buttonOrder[i];
+				panelBottom1.add(button[imageButNo]);
+				//imageCount++;
+			}
+			panelBottom1.revalidate();
+			panelBottom1.repaint();
+
+			//test
+
 			//
 //			if (startImage >= 1) {
 //				panelBottom1.removeAll();
@@ -478,7 +499,7 @@ public class CBIR extends JFrame {
 //				panelBottom1.revalidate();
 //				panelBottom1.repaint();
 //			}
-			//displayFirstPage();
+//			displayFirstPage();
 
 			// ///////////////////
 			// /your code///
