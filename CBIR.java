@@ -92,55 +92,52 @@ public class CBIR extends JFrame {
 			for (int i = 0; i < 100; i++) {
 				for (int j = 0; j < 64; j++) {
 
-					double test = (colorCodeMatrix[pic][j] / imageSize[pic]) - (colorCodeMatrix[i][j] / imageSize[i+1]);
-					
+					double test = (colorCodeMatrix[pic][j] / imageSize[pic])
+							- (colorCodeMatrix[i][j] / imageSize[i + 1]);
+
 					test = Math.abs(test);
-					d += Math.abs((colorCodeMatrix[pic][j] / imageSize[pic+1]) - (colorCodeMatrix[i][j] / imageSize[i+1]));
-					System.out.println(d);
+					d += Math
+							.abs((colorCodeMatrix[pic][j] / imageSize[pic + 1])
+									- (colorCodeMatrix[i][j] / imageSize[i + 1]));
 				}
-				
-				distance[i+1] = d;
-				distanceMap2.put(d, i+1);
+
+				distance[i + 1] = d;
+				distanceMap2.put(d, i + 1);
 				d = 0;
 			}
 
 			Arrays.sort(distance);
-			for(int i = 0; i < 101; i++) {
-				System.out.println(distance[i]);
-				
-			}
-		
+
 			for (int i = 1; i < 101; i++) {
 				ImageIcon icon;
 				int test = distanceMap2.get(distance[i]);
-				icon = new ImageIcon(getClass().getResource("image/" + distanceMap2.get(distance[i]) + ".jpg"));
+				icon = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap2.get(distance[i]) + ".jpg"));
 
 				if (icon != null) {
-					
+
 					button[i] = new JButton(icon);
 					panelBottom1.add(button[i]);
-					button[i].addActionListener(new IconButtonHandler(distanceMap2.get(distance[i]), icon));
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap2.get(distance[i]), icon));
 					buttonOrder[i] = i;
 				}
 			}
-			
+
 			int imageButNo = 0;
 			panelBottom1.removeAll();
 			for (int i = 1; i < 21; i++) {
-				//System.out.println(button[i]);
 				imageButNo = buttonOrder[i];
 				panelBottom1.add(button[imageButNo]);
-				//imageCount++;
 			}
 			panelBottom1.revalidate();
 			panelBottom1.repaint();
-			
-			//displayFirstPage();
+
+			// displayFirstPage();
 
 			// ///////////////////
 			// /your code///
 			// ///////////////
-			
 
 		}
 	}
@@ -197,7 +194,7 @@ public class CBIR extends JFrame {
 		 */
 		for (int i = 1; i < 101; i++) {
 			ImageIcon icon;
-			icon = new ImageIcon(getClass().getResource("image/" + i + ".jpg"));
+			icon = new ImageIcon(getClass().getResource("images/" + i + ".jpg"));
 
 			if (icon != null) {
 				button[i] = new JButton(icon);
@@ -231,16 +228,17 @@ public class CBIR extends JFrame {
 			// ///////////////////
 			// /your code///
 			// ///////////////
-			while (read.hasNextLine()) {          // Run through every line in the file
-				int binCount = 0;                 // Keep track of when we are accessing the next bin
-				while (read.hasNextInt()) {       // Keep reading in the pixel values in the bin till the line is empty
+			while (read.hasNextLine()) { // Run through every line in the file
+				int binCount = 0; // Keep track of when we are accessing the
+									// next bin
+				while (read.hasNextInt()) { // Keep reading in the pixel values
+											// in the bin till the line is empty
 					if (binCount == 0) {
-						imageSize[lineNumber+1] = read.nextDouble();
+						imageSize[lineNumber + 1] = read.nextDouble();
 						binCount++;
 					} else {
 
 						double i = read.nextDouble();
-						System.out.println(i);
 						intensityMatrix[lineNumber][binCount] = i;
 						binCount++;
 						if (binCount % 26 == 0) {
@@ -256,7 +254,7 @@ public class CBIR extends JFrame {
 		} catch (FileNotFoundException EE) {
 			System.out.println("The file intensity.txt does not exist");
 		}
-    System.out.println();
+		System.out.println();
 	}
 
 	/*
@@ -278,16 +276,17 @@ public class CBIR extends JFrame {
 			// /your code///
 			// ///////////////
 
-			while (read.hasNextLine()) {          // Run through every line in the file
-				int binCount = 0;                 // Keep track of when we are accessing the next bin
-				while (read.hasNextInt()) {       // Keep reading in the pixel values in the bin till the line is empty
+			while (read.hasNextLine()) { // Run through every line in the file
+				int binCount = 0; // Keep track of when we are accessing the
+									// next bin
+				while (read.hasNextInt()) { // Keep reading in the pixel values
+											// in the bin till the line is empty
 					if (binCount == 65) {
-						imageSize[lineNumber+1] = read.nextDouble();
+						imageSize[lineNumber + 1] = read.nextDouble();
 						binCount++;
 					} else {
 
 						double i = read.nextDouble();
-						System.out.println(i);
 						colorCodeMatrix[lineNumber][binCount] = i;
 						binCount++;
 						if (binCount % 65 == 0) {
@@ -317,7 +316,7 @@ public class CBIR extends JFrame {
 		int imageButNo = 0;
 		panelBottom1.removeAll();
 		for (int i = 1; i < 21; i++) {
-			//System.out.println(button[i]);
+			// System.out.println(button[i]);
 			imageButNo = buttonOrder[i];
 			panelBottom1.add(button[imageButNo]);
 			imageCount++;
@@ -438,73 +437,55 @@ public class CBIR extends JFrame {
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 26; j++) {
 
-					double test = (intensityMatrix[pic][j] / imageSize[pic]) - (intensityMatrix[i][j] / imageSize[i+1]);
-					
+					double test = (intensityMatrix[pic][j] / imageSize[pic])
+							- (intensityMatrix[i][j] / imageSize[i + 1]);
+
 					test = Math.abs(test);
-					d += Math.abs((intensityMatrix[pic][j] / imageSize[pic+1]) - (intensityMatrix[i][j] / imageSize[i+1]));
-					System.out.println(d);
+					d += Math
+							.abs((intensityMatrix[pic][j] / imageSize[pic + 1])
+									- (intensityMatrix[i][j] / imageSize[i + 1]));
 				}
-				
-				distance[i+1] = d;
-				distanceMap.put(d, i+1);
+
+				distance[i + 1] = d;
+				distanceMap.put(d, i + 1);
 				d = 0;
 			}
 
 			Arrays.sort(distance);
-			for(int i = 0; i < 101; i++) {
-				System.out.println(distance[i]);
-				
-			}
-			
+
 			for (int i = 1; i < 101; i++) {
 				ImageIcon icon;
 				int test = distanceMap.get(distance[i]);
-				icon = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
+				icon = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap.get(distance[i]) + ".jpg"));
 
 				if (icon != null) {
 					button[i] = new JButton(icon);
 					panelBottom1.add(button[i]);
-					button[i].addActionListener(new IconButtonHandler(distanceMap.get(distance[i]), icon));
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap.get(distance[i]), icon));
 					buttonOrder[i] = i;
 					panelBottom1.add(button[i]);
 				}
 			}
+			// repopulate the buttons
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+
+			}// end for i
 			int imageButNo = 0;
-			panelBottom1.removeAll();
-			for (int i = 1; i < 21; i++) {
-				//System.out.println(button[i]);
-				imageButNo = buttonOrder[i];
-				panelBottom1.add(button[imageButNo]);
-				//imageCount++;
-			}
-			panelBottom1.revalidate();
-			panelBottom1.repaint();
-
-			//test
-
-			//
-//			if (startImage >= 1) {
-//				panelBottom1.removeAll();
-//				/*
-//				 * The for loop goes through the buttonOrder array starting with
-//				 * the startImage value and retrieves the image at that place
-//				 * and then adds the button to the panelBottom1.
-//				 */
-//				for (int i = startImage; i < endImage; i++) {
-//					imageButNo = buttonOrder[i];
-//					panelBottom1.add(button[imageButNo]);
-//					imageCount--;
-//
-//				}
-//				panelBottom1.revalidate();
-//				panelBottom1.repaint();
-//			}
-//			displayFirstPage();
-
-			// ///////////////////
-			// /your code///
-			// ///////////////
-			
+			int endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}// end if
 
 		}
 	}
