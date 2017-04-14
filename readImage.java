@@ -31,11 +31,10 @@ public class readImage {
 			BufferedImage img = null;
 			try {
 				img = ImageIO
-						.read(new File("src/image/" + imageCount + ".jpg"));
+						.read(new File("src/images/" + imageCount + ".jpg"));
 				int[][] pixelData = new int[img.getHeight() * img.getWidth()][3];
 				int[] rgb;
-				System.out.println("Image height = " + img.getHeight()
-						+ "\nImage width = " + img.getWidth());
+
 				int counter = 0;
 				for (int i = 0; i < img.getHeight(); i++) {
 					for (int j = 0; j < img.getWidth(); j++) {
@@ -52,19 +51,14 @@ public class readImage {
 					}
 				}
 
-				
-				// ///////////////////////////////////
 				int totalPixels = 0;
 				for (int q = 1; q < 26; q++) { // Start at 0 for first bin with
 												// values, end at bin 24
 					intensityMatrix[imageCount - 1][q] = intensityBins[q];
 					intensityBins[q] = 0; // Reset values to 0 in the bins
-					System.out.println("intensityMatrix[" + (imageCount-1) + "][" + q + "]"
-							+ intensityMatrix[imageCount-1][q]);
 					totalPixels += intensityMatrix[imageCount-1][q];
 				}
 				intensityMatrix[imageCount-1][0] = totalPixels;
-				System.out.println(totalPixels);
 				totalPixels = 0;
 
 				for (int q = 0; q < 64; q++) {
@@ -78,7 +72,6 @@ public class readImage {
 				System.out.println("Error occurred when reading the file.");
 			}
 
-			System.out.println("ImageCount = " + imageCount);
 			imageCount++;
 		}
 		writeIntensity();
@@ -96,7 +89,6 @@ public class readImage {
 		int decimalRep = binaryToDecimal(transCC); // Convert the transformed CC
 													// number to the 6 bit
 													// decimal number
-		// System.out.println("decimalRep = " + decimalRep);
 		colorCodeBins[decimalRep]++; // Add 1 to total pixels at the converted
 										// decimal number bin
 
@@ -188,30 +180,9 @@ public class readImage {
 				(argb) & 0xff // blue
 		};
 
-		// System.out.println("rgb: " + rgb[0] + " " + rgb[1] + " " + rgb[2]);
 		return rgb;
 	}
 
-	// intensity method
-
-	// public void getIntensity(BufferedImage image, int height, int width) {
-	//
-	// // ///////////////////
-	// // /your code///
-	// // ///////////////
-	//
-	// }
-	//
-	// // color code method
-	// public void getColorCode(BufferedImage image, int height, int width) {
-	// // ///////////////////
-	// // /your code///
-	// // ///////////////
-	// }
-
-	// /////////////////////////////////////////////
-	// add other functions you think are necessary//
-	// /////////////////////////////////////////////
 
 	// This method writes the contents of the colorCode matrix to a file named
 	// colorCodes.txt.
@@ -219,7 +190,7 @@ public class readImage {
 		// ///////////////////
 		// /your code///
 		// ///////////////
-		String fileName = "src/colorCodes.txt";
+		String fileName = "colorCodes.txt";
 		try {
 			// Assuming default encoding.
 			FileWriter fileWriter = new FileWriter(fileName);
@@ -252,7 +223,7 @@ public class readImage {
 		// /your code///
 		// ///////////////
 
-		String fileName = "src/intensity.txt";
+		String fileName = "intensity.txt";
 		try {
 			// Assuming default encoding.
 			FileWriter fileWriter = new FileWriter(fileName);

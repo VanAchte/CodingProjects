@@ -58,7 +58,7 @@ public class CBIR extends JFrame {
 	int pageNo = 1;
 
 	public static void main(String args[]) {
-
+		new readImage();
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				CBIR app = new CBIR();
@@ -154,7 +154,7 @@ public class CBIR extends JFrame {
 		gridLayout1 = new GridLayout(4, 5, 5, 5);
 		gridLayout2 = new GridLayout(2, 1, 5, 5);
 		gridLayout3 = new GridLayout(1, 2, 5, 5);
-		gridLayout4 = new GridLayout(2, 3, 5, 5);
+		gridLayout4 = new GridLayout(1, 1, 1, 1);
 		setLayout(gridLayout2);
 		panelBottom1.setLayout(gridLayout1);
 		panelBottom2.setLayout(gridLayout1);
@@ -182,11 +182,13 @@ public class CBIR extends JFrame {
 		previousPage.addActionListener(new previousPageHandler());
 		intensity.addActionListener(new intensityHandler());
 		colorCode.addActionListener(new colorCodeHandler());
-		setSize(1100, 750);
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		setSize(screenSize.width, screenSize.height);
 		// this centers the frame on the screen
 		setLocationRelativeTo(null);
 
 		button = new JButton[101];
+		
 		/*
 		 * This for loop goes through the images in the database and stores them
 		 * as icons and adds the images to JButtons and then to the JButton
@@ -195,12 +197,17 @@ public class CBIR extends JFrame {
 		for (int i = 1; i < 101; i++) {
 			ImageIcon icon;
 			icon = new ImageIcon(getClass().getResource("images/" + i + ".jpg"));
-
+			   Image img = icon.getImage();  
+			   Image newimg = img.getScaledInstance( icon.getIconWidth() / 3 + 240, icon.getIconHeight() / 3 + 35,  java.awt.Image.SCALE_SMOOTH ) ;  
+			   icon = new ImageIcon( newimg );
 			if (icon != null) {
+				//button[i].setSize(20, 15);
 				button[i] = new JButton(icon);
 				// panelBottom1.add(button[i]);
 				button[i].addActionListener(new IconButtonHandler(i, icon));
 				buttonOrder[i] = i;
+                
+				//System.out.println("height = " + button[i].getHeight() + "\nwidth = " + button[i].getWidth());
 			}
 		}
 
@@ -223,7 +230,7 @@ public class CBIR extends JFrame {
 		String line = "";
 		int lineNumber = 0;
 		try {
-			read = new Scanner(new File("src/intensity.txt"));
+			read = new Scanner(new File("intensity.txt"));
 
 			// ///////////////////
 			// /your code///
@@ -270,7 +277,7 @@ public class CBIR extends JFrame {
 		String line = "";
 		int lineNumber = 0;
 		try {
-			read = new Scanner(new File("src/colorCodes.txt"));
+			read = new Scanner(new File("colorCodes.txt"));
 
 			// ///////////////////
 			// /your code///
