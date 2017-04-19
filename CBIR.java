@@ -38,8 +38,8 @@ public class CBIR extends JFrame {
 	private GridLayout gridLayout2;
 	private GridLayout gridLayout3;
 	private GridLayout gridLayout4;
-	private GridBagLayout gridBagLayout1;
-	GridBagConstraints constraints;
+	String lastMethod = "null";
+
 	private JPanel panelBottom1;
 	private JPanel panelBottom2;
 	private JPanel panelTop;
@@ -49,10 +49,12 @@ public class CBIR extends JFrame {
 	private Double[][] intensityAndCCMatrix = new Double[100][90];
 	private Map<Double, Integer> distanceMap;
 	private Map<Double, Integer> distanceMap2;
+	private Map<Double, Integer> distanceMap3;
 	int picNo = 0;
 	int imageCount = 1; // keeps up with the number of images displayed since
 						// the first page.
 	int pageNo = 1;
+	boolean relevantSelected = false;
 
 	public static void main(String args[]) {
 		new readImage();
@@ -63,8 +65,6 @@ public class CBIR extends JFrame {
 			}
 		});
 	}
-
-
 
 	public CBIR() {
 		// The following lines set up the interface including the layout of the
@@ -79,14 +79,10 @@ public class CBIR extends JFrame {
 		gridLayout2 = new GridLayout(2, 1, 5, 5);
 		gridLayout3 = new GridLayout(1, 2, 5, 5);
 		gridLayout4 = new GridLayout(2, 2, 1, 1);
-		
-		
-		gridBagLayout1 = new GridBagLayout();
-		constraints = new GridBagConstraints();
-		
+
 		setLayout(gridLayout2);
 		panelBottom1.setLayout(gridLayout1);
-		//panelBottom1.setLayout(gridBagLayout1);
+		// panelBottom1.setLayout(gridBagLayout1);
 		panelBottom2.setLayout(gridLayout1);
 		panelTop.setLayout(gridLayout3);
 		add(panelTop);
@@ -97,7 +93,7 @@ public class CBIR extends JFrame {
 
 		photographLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		buttonPanel.setLayout(gridLayout4);
-		buttonPanel.setPreferredSize(new Dimension(20,20));
+		buttonPanel.setPreferredSize(new Dimension(20, 20));
 		panelTop.add(photographLabel);
 
 		panelTop.add(buttonPanel);
@@ -105,7 +101,7 @@ public class CBIR extends JFrame {
 		JButton nextPage = new JButton("Next Page");
 		JButton intensity = new JButton("Intensity");
 		JButton colorCode = new JButton("Color Code");
-		
+
 		JButton refresh = new JButton("Refresh");
 		JButton intensityAndCC = new JButton("Intensity + Color Code");
 		JCheckBox relevance = new JCheckBox("Relevant");
@@ -116,7 +112,7 @@ public class CBIR extends JFrame {
 		buttonPanel.add(refresh);
 		buttonPanel.add(intensityAndCC);
 		buttonPanel.add(relevance);
-		
+
 		nextPage.addActionListener(new nextPageHandler());
 		previousPage.addActionListener(new previousPageHandler());
 		intensity.addActionListener(new intensityHandler());
@@ -124,49 +120,52 @@ public class CBIR extends JFrame {
 		refresh.addActionListener(new refreshHandler());
 		intensityAndCC.addActionListener(new intensityAndCCHandler());
 		relevance.addItemListener(new relevanceHandler());
-		
-		//Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+		// Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize(1170, 950);
 		// this centers the frame on the screen
 		setLocationRelativeTo(null);
 
 		button = new JButton[101];
 		relevantButton = new JCheckBox[101];
-	      
-	        /*This for loop goes through the images in the database and stores them as icons and adds
-	         * the images to JButtons and then to the JButton array
-	        */
-	        
-	        for (int i = 1; i < 101; i++) {
-	        	button[i] = new JButton();
-	        	button[i].setSize(70, 90); 
-	       		int height = button[i].getHeight();
-	       		int width = button[i].getWidth();
-	       		button[i].setOpaque(false);
-	    		button[i].setContentAreaFilled(false);
-	    		button[i].setBorderPainted(false);
-	    		
-	        	ImageIcon icon2;
-	            icon2 = new ImageIcon(getClass().getResource("image/" + i + ".jpg"));
-	            Image img = icon2.getImage();
-	            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-	            ImageIcon icon;
-	            icon = new ImageIcon(newimg);
-	                 
-	             if(icon != null){				
-	                //button[i] = new JButton();
-	            	button[i].setIcon(icon);
-	                button[i].addActionListener(new IconButtonHandler(i, icon));
-	                buttonOrder[i] = i;
-	                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-	            }//end if
-	        }//end for
+
+		/*
+		 * This for loop goes through the images in the database and stores them
+		 * as icons and adds the images to JButtons and then to the JButton
+		 * array
+		 */
+
+		for (int i = 1; i < 101; i++) {
+			button[i] = new JButton();
+			button[i].setSize(70, 90);
+			int height = button[i].getHeight();
+			int width = button[i].getWidth();
+			button[i].setOpaque(false);
+			button[i].setContentAreaFilled(false);
+			button[i].setBorderPainted(false);
+
+			ImageIcon icon2;
+			icon2 = new ImageIcon(getClass()
+					.getResource("images/" + i + ".jpg"));
+			Image img = icon2.getImage();
+			Image newimg = img.getScaledInstance(width + 120, height,
+					java.awt.Image.SCALE_SMOOTH);
+			ImageIcon icon;
+			icon = new ImageIcon(newimg);
+
+			if (icon != null) {
+				button[i].setIcon(icon);
+				button[i].addActionListener(new IconButtonHandler(i, icon));
+				buttonOrder[i] = i;
+				imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+						.getIconWidth());
+			}// end if
+		}// end for
 		readIntensityFile();
 		readColorCodeFile();
 		displayFirstPage();
 		this.validate();
 	}
-
 
 	/*
 	 * This method opens the intensity text file containing the intensity matrix
@@ -246,8 +245,8 @@ public class CBIR extends JFrame {
 
 						double i = read.nextDouble();
 						colorCodeMatrix[lineNumber][binCount] = i;
-						if(binCount < 64) {
-						    intensityAndCCMatrix[lineNumber][binCount + 26] = i;
+						if (binCount < 64) {
+							intensityAndCCMatrix[lineNumber][binCount + 26] = i;
 						}
 						binCount++;
 						if (binCount % 65 == 0) {
@@ -276,18 +275,19 @@ public class CBIR extends JFrame {
 	private void displayFirstPage() {
 		int imageButNo = 0;
 		panelBottom1.removeAll();
-		
+
 		for (int i = 1; i < 21; i++) {
 			// System.out.println(button[i]);
 			imageButNo = buttonOrder[i];
 			panelBottom1.add(button[imageButNo]);
-			//panelBottom1.add(relevantButton[imageButNo]);
+			if (relevantSelected) {
+				panelBottom1.add(relevantButton[imageButNo]);
+			}
 			imageCount++;
 		}
 		panelBottom1.revalidate();
 		panelBottom1.repaint();
 
-		
 	}
 
 	/*
@@ -306,7 +306,8 @@ public class CBIR extends JFrame {
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			iconUsed = new ImageIcon(getClass().getResource("image/" + pNo + ".jpg"));
+			iconUsed = new ImageIcon(getClass().getResource(
+					"images/" + pNo + ".jpg"));
 			photographLabel.setIcon(iconUsed);
 			picNo = pNo;
 		}
@@ -331,10 +332,11 @@ public class CBIR extends JFrame {
 				for (int i = imageCount; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount++;
-
 				}
-
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
@@ -366,6 +368,9 @@ public class CBIR extends JFrame {
 				for (int i = startImage; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount--;
 				}
 				panelBottom1.revalidate();
@@ -387,9 +392,10 @@ public class CBIR extends JFrame {
 	 * images compare. The images are then arranged from most similar to the
 	 * least.
 	 */
-	
+
 	private class intensityHandler implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			lastMethod = "I"; // For the relevance button
 			double[] distance = new double[101];
 			distanceMap = new HashMap<Double, Integer>();
 			double d = 0;
@@ -409,29 +415,30 @@ public class CBIR extends JFrame {
 				d = 0;
 			}
 			Arrays.sort(distance);
-			
+
 			for (int i = 1; i < 101; i++) {
-	        	button[i] = new JButton();
-	        	button[i].setSize(70, 90); 
-	       		int height = button[i].getHeight();
-	       		int width = button[i].getWidth();
-	       		button[i].setOpaque(false);
-	    		button[i].setContentAreaFilled(false);
-	    		button[i].setBorderPainted(false);
-//				ImageIcon icon;
-//				icon = new ImageIcon(getClass().getResource(
-//						"image/" + distanceMap.get(distance[i]) + ".jpg"));
-	        	ImageIcon icon2;
-	            icon2 = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
-	            Image img = icon2.getImage();
-	            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-	            ImageIcon icon;
-	            icon = new ImageIcon(newimg);
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
 				if (icon != null) {
-	            	button[i].setIcon(icon);
-	                button[i].addActionListener(new IconButtonHandler(distanceMap.get(distance[i]), icon));
-	                buttonOrder[i] = i;
-	                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
 
 				}
 			}
@@ -447,6 +454,9 @@ public class CBIR extends JFrame {
 				for (int i = imageCount; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount++;
 				}// end for i
 				panelBottom1.revalidate();
@@ -454,6 +464,7 @@ public class CBIR extends JFrame {
 			}// end if
 		}
 	}
+
 	/*
 	 * This class implements an ActionListener when the user selects the
 	 * colorCode button. The image number that the user would like to find
@@ -468,6 +479,7 @@ public class CBIR extends JFrame {
 	private class colorCodeHandler implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
+			lastMethod = "CC";
 			double[] distance = new double[101];
 			distanceMap2 = new HashMap<Double, Integer>();
 			double d = 0;
@@ -479,7 +491,8 @@ public class CBIR extends JFrame {
 			// For each pixel in the color matrix place, compute the distance
 			for (int i = 0; i < 100; i++) {
 				for (int j = 0; j < 64; j++) {
-					d += Math.abs((colorCodeMatrix[pic][j] / imageSize[pic + 1])
+					d += Math
+							.abs((colorCodeMatrix[pic][j] / imageSize[pic + 1])
 									- (colorCodeMatrix[i][j] / imageSize[i + 1]));
 				}
 
@@ -491,26 +504,29 @@ public class CBIR extends JFrame {
 			Arrays.sort(distance);
 
 			for (int i = 1; i < 101; i++) {
-	        	button[i] = new JButton();
-	        	button[i].setSize(70, 90); 
-	       		int height = button[i].getHeight();
-	       		int width = button[i].getWidth();
-	       		button[i].setOpaque(false);
-	    		button[i].setContentAreaFilled(false);
-	    		button[i].setBorderPainted(false);
-	        	ImageIcon icon2;
-	            icon2 = new ImageIcon(getClass().getResource("image/" + distanceMap2.get(distance[i]) + ".jpg"));
-	            Image img = icon2.getImage();
-	            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-	            ImageIcon icon;
-	            icon = new ImageIcon(newimg);
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap2.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
 				if (icon != null) {
 
-	            	button[i].setIcon(icon);
-	                button[i].addActionListener(new IconButtonHandler(distanceMap2.get(distance[i]), icon));
-	                buttonOrder[i] = i;
-	                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap2.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
 
 				}
 			}
@@ -526,12 +542,14 @@ public class CBIR extends JFrame {
 				for (int i = imageCount; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount++;
 				}// end for i
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
-
 
 			// ///////////////////
 			// /your code///
@@ -539,43 +557,45 @@ public class CBIR extends JFrame {
 
 		}
 
-
 	}
 
 	private class refreshHandler implements ActionListener {
 
 		public void actionPerformed(ActionEvent e) {
-		             
-		        /*This for loop goes through the images in the database and stores them as icons and adds
-		         * the images to JButtons and then to the JButton array
-		        */
-		        
-		       
-		       
-		        for (int i = 1; i < 101; i++) {
-		        	button[i] = new JButton();
-		        	button[i].setSize(70, 90); 
-		       		int height = button[i].getHeight();
-		       		int width = button[i].getWidth();
-		       		button[i].setOpaque(false);
-		    		button[i].setContentAreaFilled(false);
-		    		button[i].setBorderPainted(false);
-		    		
-		        	ImageIcon icon2;
-		            icon2 = new ImageIcon(getClass().getResource("image/" + i + ".jpg"));
-		            Image img = icon2.getImage();
-		            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-		            ImageIcon icon;
-		            icon = new ImageIcon(newimg);
-		                 
-		             if(icon != null){				
-		                //button[i] = new JButton();
-		            	button[i].setIcon(icon);
-		                button[i].addActionListener(new IconButtonHandler(i, icon));
-		                buttonOrder[i] = i;
-		                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-		            }//end if
-		        }//end for
+
+			/*
+			 * This for loop goes through the images in the database and stores
+			 * them as icons and adds the images to JButtons and then to the
+			 * JButton array
+			 */
+
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + i + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+
+				if (icon != null) {
+					// button[i] = new JButton();
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(i, icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+				}// end if
+			}// end for
 			// repopulate the buttons
 			imageCount = 1;
 			for (int i = imageCount; i < 21; i++) {
@@ -588,22 +608,23 @@ public class CBIR extends JFrame {
 				for (int i = imageCount; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount++;
 				}// end for i
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}// end if
-
+		lastMethod = "R";
 		}
-
 	}
-	
-	private class intensityAndCCHandler implements ActionListener, ItemListener{
 
+	private class intensityAndCCHandler implements ActionListener, ItemListener {
 		public void actionPerformed(ActionEvent e) {
-			
+			lastMethod = "I+CC";
 			double[] distance = new double[101];
-			distanceMap = new HashMap<Double, Integer>();
+			distanceMap3 = new HashMap<Double, Integer>();
 			double d = 0;
 			int compareImage = 0;
 			int pic = (picNo - 1);
@@ -616,35 +637,37 @@ public class CBIR extends JFrame {
 							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
 									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
 				}
+				
 				distance[i + 1] = d;
-				distanceMap.put(d, i + 1);
+				distanceMap3.put(d, i + 1);
 				d = 0;
 			}
 			Arrays.sort(distance);
-			////////////////
+			
 			for (int i = 1; i < 101; i++) {
-	        	button[i] = new JButton();
-	        	button[i].setSize(70, 90); 
-	       		int height = button[i].getHeight();
-	       		int width = button[i].getWidth();
-	       		button[i].setOpaque(false);
-	    		button[i].setContentAreaFilled(false);
-	    		button[i].setBorderPainted(false);
-//				ImageIcon icon;
-//				icon = new ImageIcon(getClass().getResource(
-//						"image/" + distanceMap.get(distance[i]) + ".jpg"));
-	        	ImageIcon icon2;
-	            icon2 = new ImageIcon(getClass().getResource("image/" + distanceMap.get(distance[i]) + ".jpg"));
-	            Image img = icon2.getImage();
-	            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-	            ImageIcon icon;
-	            icon = new ImageIcon(newimg);
-				if (icon != null) {
-	            	button[i].setIcon(icon);
-	                button[i].addActionListener(new IconButtonHandler(distanceMap.get(distance[i]), icon));
-	                buttonOrder[i] = i;
-	                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
 
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap3.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+				if (icon != null) {
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap3.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
 				}
 			}
 			// repopulate the buttons
@@ -659,225 +682,367 @@ public class CBIR extends JFrame {
 				for (int i = imageCount; i < endImage; i++) {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
 					imageCount++;
 				}// end for i
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
-			////////////////
-			
-//			for (int i = 1; i < 101; i++) {
-//				ImageIcon icon;
-//				icon = new ImageIcon(getClass().getResource(
-//						"image/" + distanceMap.get(distance[i]) + ".jpg"));
-//
-//				if (icon != null) {
-//					button[i] = new JButton(icon);
-//					relevantButton[i] = new JCheckBox();
-//					panelBottom1.add(button[i]);
-//					//panelBottom1.add(relevantButton[i]);
-//					relevantButton[i].addItemListener(this);
-//					button[i].addActionListener(new IconButtonHandler(
-//							distanceMap.get(distance[i]), icon));
-//					buttonOrder[i] = i;
-//					panelBottom1.add(button[i]);
-//				}
-//			}
-//			// repopulate the buttons
-//			imageCount = 1;
-//			for (int i = imageCount; i < 21; i++) {
-//				panelBottom1.add(button[buttonOrder[i]]);
-//			}// end for i
-//			int imageButNo = 0;
-//			int endImage = imageCount + 20;
-//			if (endImage <= 101) {
-//				panelBottom1.removeAll();
-//				for (int i = imageCount; i < endImage; i++) {
-//					imageButNo = buttonOrder[i];
-//					panelBottom1.add(button[imageButNo]);
-//					//panelBottom1.add(relevantButton[i]);
-//					imageCount++;
-//				}// end for i
-//				panelBottom1.revalidate();
-//				panelBottom1.repaint();
-//			}// end if
+			System.out.println();
 		}
-
-
 
 		public void itemStateChanged(ItemEvent e) {
 			System.out.println("State Change");
-			
+
 		}
 
 	}
-	
-	private class relevanceHandler implements ActionListener, ItemListener{
+
+	private class relevanceHandler implements ActionListener, ItemListener {
 
 		public void actionPerformed(ActionEvent e) {
-             
-		}
 
-		
+		}
 		public void itemStateChanged(ItemEvent e) {
-			System.out.println("Hi");
 			Object source = e.getItemSelectable();
-			 if (e.getStateChange() == ItemEvent.DESELECTED) {
-			        for (int i = 1; i < 101; i++) {
-			        	button[i] = new JButton();
-			        	button[i].setSize(70, 90); 
-			       		int height = button[i].getHeight();
-			       		int width = button[i].getWidth();
-			       		button[i].setOpaque(false);
-			    		button[i].setContentAreaFilled(false);
-			    		button[i].setBorderPainted(false);
-			    		
-			        	ImageIcon icon2;
-			            icon2 = new ImageIcon(getClass().getResource("image/" + i + ".jpg"));
-			            Image img = icon2.getImage();
-			            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-			            ImageIcon icon;
-			            icon = new ImageIcon(newimg);
-			                 
-			             if(icon != null){				
-			                //button[i] = new JButton();
-			            	button[i].setIcon(icon);
-			                button[i].addActionListener(new IconButtonHandler(i, icon));
-			                buttonOrder[i] = i;
-			                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-			            }//end if
-			        }//end for
-				// repopulate the buttons
-				imageCount = 1;
-				for (int i = imageCount; i < 21; i++) {
-					panelBottom1.add(button[buttonOrder[i]]);
-				}// end for i
-				int imageButNo = 0;
-				int endImage = imageCount + 20;
-				if (endImage <= 101) {
-					panelBottom1.removeAll();
-					for (int i = imageCount; i < endImage; i++) {
-						imageButNo = buttonOrder[i];
-						panelBottom1.add(button[imageButNo]);
-						imageCount++;
-					}// end for i
-					panelBottom1.revalidate();
-					panelBottom1.repaint();
-				}// end if
-			 } else {
-			        for (int i = 1; i < 101; i++) {
-			        	button[i] = new JButton();
-			        	relevantButton[i] = new JCheckBox();
-			        	button[i].setSize(70, 90); 
-			       		int height = button[i].getHeight();
-			       		int width = button[i].getWidth();
-			       		button[i].setOpaque(false);
-			    		button[i].setContentAreaFilled(false);
-			    		button[i].setBorderPainted(false);
-			    		
-			        	ImageIcon icon2;
-			            icon2 = new ImageIcon(getClass().getResource("image/" + i + ".jpg"));
-			            Image img = icon2.getImage();
-			            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-			            ImageIcon icon;
-			            icon = new ImageIcon(newimg);
-			                 
-			             if(icon != null){				
-			                //button[i] = new JButton();
-			            	button[i].setIcon(icon);
-			            	relevantButton[i].addItemListener(this);
-			                button[i].addActionListener(new IconButtonHandler(i, icon));
-			                buttonOrder[i] = i;
-			                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-			            }//end if
-			        }//end for
-				// repopulate the buttons
-				imageCount = 1;
-				for (int i = imageCount; i < 21; i++) {
-					panelBottom1.add(button[buttonOrder[i]]);
-				}// end for i
-				int imageButNo = 0;
-				int endImage = imageCount + 20;
-				if (endImage <= 101) {
-					panelBottom1.removeAll();
-					for (int i = imageCount; i < endImage; i++) {
-						imageButNo = buttonOrder[i];
-						panelBottom1.add(button[imageButNo]);
-						panelBottom1.add(relevantButton[imageButNo]);
-						imageCount++;
-					}// end for i
-					panelBottom1.revalidate();
-					panelBottom1.repaint();
-				}// end if
-			 }
-			
-//			double[] distance = new double[101];
-//			distanceMap = new HashMap<Double, Integer>();
-//			double d = 0;
-//			int compareImage = 0;
-//			int pic = (picNo - 1);
-//			int picIntensity = 0;
-//			double picSize = imageSize[pic];
-//
-//			for (int i = 0; i < 100; i++) {
-//				for (int j = 1; j < 90; j++) {
-//					d += Math
-//							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-//									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
-//				}
-//				distance[i + 1] = d;
-//				distanceMap.put(d, i + 1);
-//				d = 0;
-//			}
-//			Arrays.sort(distance);
-//			for (int i = 1; i < 101; i++) {
-//	        	button[i] = new JButton();
-//	        	button[i].setSize(70, 90); 
-//	       		int height = button[i].getHeight();
-//	       		int width = button[i].getWidth();
-//	       		button[i].setOpaque(false);
-//	    		button[i].setContentAreaFilled(false);
-//	    		button[i].setBorderPainted(false);
-////				ImageIcon icon;
-////				icon = new ImageIcon(getClass().getResource(
-////						"image/" + distanceMap.get(distance[i]) + ".jpg"));
-//	        	ImageIcon icon2;
-//	            icon2 = new ImageIcon(getClass().getResource("image/" + distanceMap2.get(distance[i]) + ".jpg"));
-//	            Image img = icon2.getImage();
-//	            Image newimg = img.getScaledInstance(width + 120, height,  java.awt.Image.SCALE_SMOOTH ) ;
-//	            ImageIcon icon;
-//	            icon = new ImageIcon(newimg);
-//				if (icon != null) {
-//
-//	            	button[i].setIcon(icon);
-//	                button[i].addActionListener(new IconButtonHandler(i, icon));
-//	                buttonOrder[i] = i;
-//	                imageSize[i] = (Double)(double)(icon.getIconHeight() *  icon.getIconWidth());
-//
-//
-//				}
-//			}
-//			// repopulate the buttons
-//			imageCount = 1;
-//			for (int i = imageCount; i < 21; i++) {
-//				panelBottom1.add(button[buttonOrder[i]]);
-//			}// end for i
-//			int imageButNo = 0;
-//			int endImage = imageCount + 20;
-//			if (endImage <= 101) {
-//				panelBottom1.removeAll();
-//				for (int i = imageCount; i < endImage; i++) {
-//					imageButNo = buttonOrder[i];
-//					panelBottom1.add(button[imageButNo]);
-//					panelBottom1.add(relevantButton[i]);
-//					imageCount++;
-//				}// end for i
-//				panelBottom1.revalidate();
-//				panelBottom1.repaint();
-//			}// end if
-			
+			if (e.getStateChange() == ItemEvent.DESELECTED) {
+				relevantSelected = false;
+			} else {
+				relevantSelected = true;
+			}
+			setRelevanceButtons();
 		}
 	}
 
+	private void setRelevanceButtons() {
+		switch (lastMethod) {
+		case "R" :
+			/*
+			 * This for loop goes through the images in the database and stores
+			 * them as icons and adds the images to JButtons and then to the
+			 * JButton array
+			 */
+
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + i + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+
+				if (icon != null) {
+					// button[i] = new JButton();
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(i, icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+				}// end if
+			}// end for
+			// repopulate the buttons
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+			}// end for i
+			int imageButNo = 0;
+			int endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}// end if
+			break;
+		case "null":
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				relevantButton[i] = new JCheckBox("Relevant");
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass()
+						.getResource("images/" + i + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+
+				if (icon != null) {
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(i, icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+				}// end if
+			}// end for
+			// repopulate the buttons
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+			}// end for i
+			imageButNo = 0;
+			endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}// end if
+			
+			break;
+		case "I":
+			double[] distance = new double[101];
+			distanceMap = new HashMap<Double, Integer>();
+			double d = 0;
+			int compareImage = 0;
+			int pic = (picNo - 1);
+			int picIntensity = 0;
+			double picSize = imageSize[pic];
+
+			for (int i = 0; i < 100; i++) {
+				for (int j = 1; j < 26; j++) {
+					d += Math
+							.abs((intensityMatrix[pic][j] / imageSize[pic + 1])
+									- (intensityMatrix[i][j] / imageSize[i + 1]));
+				}
+				distance[i + 1] = d;
+				distanceMap.put(d, i + 1);
+				d = 0;
+			}
+			Arrays.sort(distance);
+
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				relevantButton[i] = new JCheckBox("Relevant");
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+				if (icon != null) {
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+
+				}
+			}
+			// repopulate the buttons
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+				panelBottom1.add(relevantButton[i]);
+			}// end for i
+			imageButNo = 0;
+			endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}// end if
+			break;
+		case "I+CC":
+			distance = new double[101];
+			distanceMap = new HashMap<Double, Integer>();
+			d = 0;
+			compareImage = 0;
+			pic = (picNo - 1);
+			picIntensity = 0;
+			picSize = imageSize[pic];
+
+			for (int i = 0; i < 100; i++) {
+				for (int j = 1; j < 90; j++) {
+					d += Math
+							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+				}
+				distance[i + 1] = d;
+				distanceMap.put(d, i + 1);
+				d = 0;
+			}
+			Arrays.sort(distance);
+			// //////////////
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+				// ImageIcon icon;
+				// icon = new ImageIcon(getClass().getResource(
+				// "images/" + distanceMap.get(distance[i]) + ".jpg"));
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+				if (icon != null) {
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+
+				}
+			}
+			// repopulate the buttons
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+			}// end for i
+			imageButNo = 0;
+			endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}
+			break;
+		case "CC" :
+			distance = new double[101];
+			distanceMap2 = new HashMap<Double, Integer>();
+			d = 0;
+			compareImage = 0;
+			pic = (picNo - 1);
+			picIntensity = 0;
+			picSize = imageSize[pic];
+
+			// For each pixel in the color matrix place, compute the distance
+			for (int i = 0; i < 100; i++) {
+				for (int j = 0; j < 64; j++) {
+					d += Math
+							.abs((colorCodeMatrix[pic][j] / imageSize[pic + 1])
+									- (colorCodeMatrix[i][j] / imageSize[i + 1]));
+				}
+
+				distance[i + 1] = d;
+				distanceMap2.put(d, i + 1);
+				d = 0;
+			}
+
+			Arrays.sort(distance);
+
+			for (int i = 1; i < 101; i++) {
+				button[i] = new JButton();
+				relevantButton[i] = new JCheckBox("Relevant");
+				button[i].setSize(70, 90);
+				int height = button[i].getHeight();
+				int width = button[i].getWidth();
+				button[i].setOpaque(false);
+				button[i].setContentAreaFilled(false);
+				button[i].setBorderPainted(false);
+				ImageIcon icon2;
+				icon2 = new ImageIcon(getClass().getResource(
+						"images/" + distanceMap2.get(distance[i]) + ".jpg"));
+				Image img = icon2.getImage();
+				Image newimg = img.getScaledInstance(width + 120, height,
+						java.awt.Image.SCALE_SMOOTH);
+				ImageIcon icon;
+				icon = new ImageIcon(newimg);
+				if (icon != null) {
+
+					button[i].setIcon(icon);
+					button[i].addActionListener(new IconButtonHandler(
+							distanceMap2.get(distance[i]), icon));
+					buttonOrder[i] = i;
+					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
+							.getIconWidth());
+
+				}
+			}
+
+			imageCount = 1;
+			for (int i = imageCount; i < 21; i++) {
+				panelBottom1.add(button[buttonOrder[i]]);
+			}// end for i
+			imageButNo = 0;
+			endImage = imageCount + 20;
+			if (endImage <= 101) {
+				panelBottom1.removeAll();
+				for (int i = imageCount; i < endImage; i++) {
+					imageButNo = buttonOrder[i];
+					panelBottom1.add(button[imageButNo]);
+					if (relevantSelected) {
+						panelBottom1.add(relevantButton[imageButNo]);
+					}
+					imageCount++;
+				}// end for i
+				panelBottom1.revalidate();
+				panelBottom1.repaint();
+			}
+
+			// ///////////////////
+			// /your code///
+			// ///////////////
+
+		}
+	}
 
 }
