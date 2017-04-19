@@ -182,7 +182,6 @@ public class CBIR extends JFrame {
 		int lineNumber = 0;
 		try {
 			read = new Scanner(new File("src/intensity.txt"));
-
 			// ///////////////////
 			// /your code///
 			// ///////////////
@@ -633,9 +632,18 @@ public class CBIR extends JFrame {
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 90; j++) {
-					d += Math
-							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+//					d += Math
+//							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+//									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+					d = Math
+					.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+							- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+					System.out.print("intensityAndCCMatrix[" + pic + "][" + j + "] = " + intensityAndCCMatrix[pic][j]);
+					System.out.println(" imageSize[" + (pic+1) + "] = " + imageSize[pic+1]  );
+					System.out.print("intensityAndCCMatrix[" + i + "][" + j + "] = " + intensityAndCCMatrix[i][j]);
+					System.out.println(" imageSize[" + (i) + "] = " + imageSize[i+1]  );
+					System.out.println("intensityAndCCMatrix[" + pic + "][" + j + "] / imageSize[" + (pic+1)
+							+ "] - (intensityAndCCMatrix[" + i + "][" + j + "] / imageSize[" + (i+1) + "] = " + d);
 				}
 				
 				distance[i + 1] = d;
