@@ -47,6 +47,7 @@ public class CBIR extends JFrame {
 	private Double[][] intensityMatrix = new Double[100][26];
 	private Double[][] colorCodeMatrix = new Double[100][65];
 	private Double[][] intensityAndCCMatrix = new Double[100][90];
+	private Double[] featureMatrix;
 	private Map<Double, Integer> distanceMap;
 	private Map<Double, Integer> distanceMap2;
 	private Map<Double, Integer> distanceMap3;
@@ -146,7 +147,7 @@ public class CBIR extends JFrame {
 
 			ImageIcon icon2;
 			icon2 = new ImageIcon(getClass()
-					.getResource("images/" + i + ".jpg"));
+					.getResource("image/" + i + ".jpg"));
 			Image img = icon2.getImage();
 			Image newimg = img.getScaledInstance(width + 120, height,
 					java.awt.Image.SCALE_SMOOTH);
@@ -306,7 +307,7 @@ public class CBIR extends JFrame {
 
 		public void actionPerformed(ActionEvent e) {
 			iconUsed = new ImageIcon(getClass().getResource(
-					"images/" + pNo + ".jpg"));
+					"image/" + pNo + ".jpg"));
 			photographLabel.setIcon(iconUsed);
 			picNo = pNo;
 		}
@@ -425,7 +426,7 @@ public class CBIR extends JFrame {
 				button[i].setBorderPainted(false);
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -512,7 +513,7 @@ public class CBIR extends JFrame {
 				button[i].setBorderPainted(false);
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap2.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap2.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -579,7 +580,7 @@ public class CBIR extends JFrame {
 
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + i + ".jpg"));
+						"image/" + i + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -632,6 +633,7 @@ public class CBIR extends JFrame {
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 90; j++) {
+					
 					d += (0.01123596 * Math
 							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
 									- (intensityAndCCMatrix[i][j] / imageSize[i + 1])));
@@ -663,7 +665,7 @@ public class CBIR extends JFrame {
 
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap3.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap3.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -712,6 +714,7 @@ public class CBIR extends JFrame {
 		Double[] average = new Double[89];
 		Double[] std = new Double[89];
 		
+		//Populate feature array with intensity and color code bins
 		for(int i = 1; i < 101; i++) {
 			for(int j = 0; j < 25; j++) {
 				feature[j][i] = intensityMatrix[j][i] / imageSize[j];
@@ -719,7 +722,13 @@ public class CBIR extends JFrame {
 			for(int k = 25; k < 89; k++) {
 				feature[k][i] = colorCodeMatrix[k][i-25] / imageSize[i-25];
 			}
-			
+
+		}
+		for(int i = 0; i < 89; i++) {
+			for(int j = 1; j < 101; j++) {
+				average[i] += feature[j][i];
+			}
+			average[i] /= 100;
 		}
 	}
 	private class relevanceHandler implements ActionListener, ItemListener {
@@ -728,7 +737,6 @@ public class CBIR extends JFrame {
 
 		}
 		public void itemStateChanged(ItemEvent e) {
-			Object source = e.getItemSelectable();
 			if (e.getStateChange() == ItemEvent.DESELECTED) {
 				relevantSelected = false;
 			} else {
@@ -758,7 +766,7 @@ public class CBIR extends JFrame {
 
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + i + ".jpg"));
+						"image/" + i + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -808,7 +816,7 @@ public class CBIR extends JFrame {
 
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass()
-						.getResource("images/" + i + ".jpg"));
+						.getResource("image/" + i + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -878,7 +886,7 @@ public class CBIR extends JFrame {
 
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -947,10 +955,10 @@ public class CBIR extends JFrame {
 				button[i].setBorderPainted(false);
 				// ImageIcon icon;
 				// icon = new ImageIcon(getClass().getResource(
-				// "images/" + distanceMap.get(distance[i]) + ".jpg"));
+				// "image/" + distanceMap.get(distance[i]) + ".jpg"));
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -1022,7 +1030,7 @@ public class CBIR extends JFrame {
 				button[i].setBorderPainted(false);
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap2.get(distance[i]) + ".jpg"));
+						"image/" + distanceMap2.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
