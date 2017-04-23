@@ -633,10 +633,10 @@ public class CBIR extends JFrame {
 
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 90; j++) {
-					
-					d += (0.01123596 * Math
-							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-									- (intensityAndCCMatrix[i][j] / imageSize[i + 1])));
+					normalization();
+//					d += (0.01123596 * Math
+//							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+//									- (intensityAndCCMatrix[i][j] / imageSize[i + 1])));
 //					d = Math
 //					.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
 //							- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
@@ -713,24 +713,41 @@ public class CBIR extends JFrame {
 		Double[][] feature = new Double[101][89];
 		Double[] average = new Double[89];
 		Double[] std = new Double[89];
-		
+
 		//Populate feature array with intensity and color code bins
 		for(int i = 1; i < 101; i++) {
-			for(int j = 0; j < 25; j++) {
-				feature[j][i] = intensityMatrix[j][i] / imageSize[j];
+			for(int j = 1; j < 26; j++) {
+				System.out.println("intensityMatrix[i][j] = " + intensityMatrix[i-1][j] + "\nimageSize[i] = " + imageSize[i]);
+				feature[i][j] = intensityMatrix[i-1][j] / imageSize[i];
 			}
 			for(int k = 25; k < 89; k++) {
-				feature[k][i] = colorCodeMatrix[k][i-25] / imageSize[i-25];
+				feature[i][k] = colorCodeMatrix[k][i] / imageSize[i]; 
 			}
-
 		}
 		for(int i = 0; i < 89; i++) {
 			for(int j = 1; j < 101; j++) {
-				average[i] += feature[j][i];
+				average[i] += feature[j][i]; // Add all of the numbers in a column into the average array
 			}
-			average[i] /= 100;
+			average[i] /= 100; // Divide the number of features by the number of images
+			int total = 0; // Sum the total of the column data set
+			
+			//Calculate the standard deviation
+			for(int j = 1; j < 101; j++) {
+				total += Math.pow(feature[j][i] - average[i], 2); 
+			}
+			for(int j = 1; j < 101; j++) {
+				std[i] = Math.sqrt(total/100); 
+				                              
+			}
+			// Set normalization values into intensityAndCCMatrix
+			for(int j = 1; j < 101; j++) {
+				intensityAndCCMatrix[j][i] = (feature[j][i] - average[i]) / std[i];	
+			}
+			
 		}
+
 	}
+	
 	private class relevanceHandler implements ActionListener, ItemListener {
 
 		public void actionPerformed(ActionEvent e) {
