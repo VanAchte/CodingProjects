@@ -630,22 +630,23 @@ public class CBIR extends JFrame {
 			int pic = (picNo - 1);
 			int picIntensity = 0;
 			double picSize = imageSize[pic+1];
-
+			normalization();
 			for (int i = 0; i < 100; i++) {
 				for (int j = 1; j < 90; j++) {
-					normalization();
-//					d += (0.01123596 * Math
-//							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-//									- (intensityAndCCMatrix[i][j] / imageSize[i + 1])));
-//					d = Math
-//					.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-//							- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
-//					System.out.print("intensityAndCCMatrix[" + pic + "][" + j + "] = " + intensityAndCCMatrix[pic][j]);
-//					System.out.println(" imageSize[" + (pic+1) + "] = " + imageSize[pic+1]  );
-//					System.out.print("intensityAndCCMatrix[" + i + "][" + j + "] = " + intensityAndCCMatrix[i][j]);
-//					System.out.println(" imageSize[" + (i) + "] = " + imageSize[i+1]  );
-//					System.out.println("intensityAndCCMatrix[" + pic + "][" + j + "] / imageSize[" + (pic+1)
-//							+ "] - (intensityAndCCMatrix[" + i + "][" + j + "] / imageSize[" + (i+1) + "] = " + d);
+					
+					
+					d += (0.01123596 * Math
+							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+									- (intensityAndCCMatrix[i][j] / imageSize[i + 1])));
+					d = Math
+					.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
+							- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+					System.out.print("intensityAndCCMatrix[" + pic + "][" + j + "] = " + intensityAndCCMatrix[pic][j]);
+					System.out.println(" imageSize[" + (pic+1) + "] = " + imageSize[pic+1]  );
+					System.out.print("intensityAndCCMatrix[" + i + "][" + j + "] = " + intensityAndCCMatrix[i][j]);
+					System.out.println(" imageSize[" + (i) + "] = " + imageSize[i+1]  );
+					System.out.println("intensityAndCCMatrix[" + pic + "][" + j + "] / imageSize[" + (pic+1)
+							+ "] - (intensityAndCCMatrix[" + i + "][" + j + "] / imageSize[" + (i+1) + "] = " + d);
 				}
 				
 				distance[i + 1] = d;
@@ -709,44 +710,178 @@ public class CBIR extends JFrame {
 		}
 
 	}
-	private void normalization() {
-		Double[][] feature = new Double[101][89];
+//	private void normalization() {
+//		Double[][] feature = new Double[101][89];
+//		Double[] average = new Double[89];
+//		Double[] std = new Double[89];
+
+ public void normalization() {
+		Double[][] featureSet = new Double[101][89];
 		Double[] average = new Double[89];
-		Double[] std = new Double[89];
+		Double[] standardDev = new Double[89];
 
+		Arrays.fill(average, 0.0);
+		Arrays.fill(standardDev, 0.0);
+
+		// set all of the photo bins into one 2d array
+		for (int j = 1; j < 101; j++) {
+			for (int i = 0; i < 25; i++) {
+				featureSet[j][i] = intensityMatrix[j-1][i+1] / imageSize[j];
+			}// end for
+			for (int i = 25; i < 89; i++) {
+				featureSet[j][i] = colorCodeMatrix[j-1][i - 25] / imageSize[j];
+			}// end for
+				
+		}// end for j
+
+		// calc average
+		for (int j = 0; j < 89; j++) {
+			for (int i = 1; i < 101; i++) {
+				average[j] += featureSet[i][j];
+			}// end i
+			average[j] /= 100;
+		}// end j
+
+
+		// calc standard dev.
+		for (int j = 0; j < 89; j++) {
+			for (int i = 1; i < 101; i++) {
+				standardDev[j] += Math.pow(
+						Math.abs(featureSet[i][j] - average[j]), 2);
+
+			}// end i
+			standardDev[j] /= 100; // size - 1
+			standardDev[j] = Math.sqrt(standardDev[j]);
+
+		}// end j
+
+
+		// check zero case
+		double min;
+		if (standardDev[0] != 0.0)
+			min = standardDev[0];
+		else
+			min = 1;
+		for (int i = 1; i < 89; i++) {
+			if ((min > standardDev[i]) && (standardDev[i] != 0.0))
+				min = standardDev[i];
+		}// end if
+			// System.out.println("Minimum: " + min);
+
+		for (int i = 0; i < 89; i++) {
+			if ((standardDev[i] == 0.0) && (average[i] != 0.0)) {
+				standardDev[i] = min * 0.5;
+			}// end if
+
+		}// end for
+
+
+		// normalize featureSet
+		// System.out.println("Relevance Matrix: \n");
+		for (int i = 1; i < 101; i++) {
+			for (int j = 0; j < 89; j++) {
+				if (standardDev[j] == 0.0) {
+					intensityAndCCMatrix[i-1][j] = 0.0;
+				} else
+					intensityAndCCMatrix[i-1][j] = (featureSet[i][j] - average[j])
+							/ standardDev[j];
+			}// end for j
+				// System.out.println( Arrays.toString(relevanceMatrix[i]));
+		}// end for i
+
+		System.out.println("Finishing normalization Calculator ");
+	}// end normalizationCalculator
+ 
 		//Populate feature array with intensity and color code bins
-		for(int i = 1; i < 101; i++) {
-			for(int j = 1; j < 26; j++) {
-				System.out.println("intensityMatrix[i][j] = " + intensityMatrix[i-1][j] + "\nimageSize[i] = " + imageSize[i]);
-				feature[i][j] = intensityMatrix[i-1][j] / imageSize[i];
-			}
-			for(int k = 25; k < 89; k++) {
-				feature[i][k] = colorCodeMatrix[k][i] / imageSize[i]; 
-			}
-		}
-		for(int i = 0; i < 89; i++) {
-			for(int j = 1; j < 101; j++) {
-				average[i] += feature[j][i]; // Add all of the numbers in a column into the average array
-			}
-			average[i] /= 100; // Divide the number of features by the number of images
-			int total = 0; // Sum the total of the column data set
-			
-			//Calculate the standard deviation
-			for(int j = 1; j < 101; j++) {
-				total += Math.pow(feature[j][i] - average[i], 2); 
-			}
-			for(int j = 1; j < 101; j++) {
-				std[i] = Math.sqrt(total/100); 
-				                              
-			}
-			// Set normalization values into intensityAndCCMatrix
-			for(int j = 1; j < 101; j++) {
-				intensityAndCCMatrix[j][i] = (feature[j][i] - average[i]) / std[i];	
-			}
-			
-		}
-
-	}
+//		for(int i = 1; i < 101; i++) {
+//			for(int j = 1; j < 26; j++) {
+//				//System.out.println("intensityMatrix[i][j] = " + intensityMatrix[i-1][j] + "\nimageSize[i] = " + imageSize[i]);
+//				feature[i][j-1] = intensityMatrix[i-1][j] / imageSize[i];
+//			}
+//			for(int k = 25; k < 89; k++) {
+//				feature[i][k] = colorCodeMatrix[i-1][k - 25] / imageSize[i]; 
+//			}
+//		}
+//		// All original features have been added to the feature matrix
+//		// Getting average value for each column and save into the average array
+//		double averageTotal = 0;
+//		for(int i = 0; i < 89; i++) {
+//			for(int j = 1; j < 101; j++) {
+//				averageTotal += feature[j][i];
+//				//average[i] = average[i] + feature[j][i]; // Add all of the numbers in a column into the average array
+//			}
+//			averageTotal /= 100;
+//			average[i] = averageTotal;
+//			averageTotal = 0;
+//			//average[i] = average[i] / 100; // Divide the number of features by the number of images
+//			double total = 0; // Sum the total of the column data set
+//			/*
+//			 * 
+//			 * 		for (int j = 0; j < 89; j++) {
+//			for (int i = 1; i < 101; i++) {
+//				average[j] += featureSet[i][j];
+//			}// end i
+//			average[j] /= 100;
+//		}// end j
+//			 */
+//			//Calculate the standard deviation
+//			for(int j = 1; j < 101; j++) {
+//				System.out.println("total = " + total);
+//				System.out.println("total += Math.pow(feature[" + j + "][" +  i + "] - average[" + i + "], 2) = " + Math.pow(feature[j][i] - average[i], 2));
+//				total += Math.pow(Math.abs(feature[j][i] - average[i]), 2); 
+//			}
+//			for(int j = 1; j < 101; j++) {
+//				std[i] = Math.sqrt(total/100); 
+//				                              
+//			}
+////			for (int j = 0; j < 89; j++) {
+////				for (int i = 1; i < 101; i++) {
+////					standardDev[j] += Math.pow(
+////							Math.abs(featureSet[i][j] - average[j]), 2);
+////
+////				}// end i
+////				standardDev[j] /= 100; // size - 1
+////				standardDev[j] = Math.sqrt(standardDev[j]);
+////
+////			}// end j
+//			// Set normalization values into intensityAndCCMatrix
+//			for(int j = 1; j < 101; j++) {
+//				intensityAndCCMatrix[j-1][i] = (feature[j][i] - average[i]) / std[i];	
+//			}
+//// end for i
+//		}
+//		double min;
+//		if (std[0] != 0.0)
+//			min = std[0];
+//		else
+//			min = 1;
+//		for (int i = 1; i < 89; i++) {
+//			if ((min > std[i]) && (std[i] != 0.0))
+//				min = std[i];
+//		}// end if
+//			// System.out.println("Minimum: " + min);
+//
+//		for (int i = 0; i < 89; i++) {
+//			if ((std[i] == 0.0) && (average[i] != 0.0)) {
+//				std[i] = min * 0.5;
+//			}// end if
+//
+//		}// end for
+//
+//
+//		// normalize feature
+//		// System.out.println("Relevance Matrix: \n");
+//		for (int i = 1; i < 101; i++) {
+//			for (int j = 0; j < 89; j++) {
+//				if (std[j] == 0.0) {
+//					intensityAndCCMatrix[i-1][j] = 0.0;
+//				} else
+//					intensityAndCCMatrix[i-1][j] = (feature[i][j] - average[j])
+//							/ std[j];
+//			}// end for j
+//				// System.out.println( Arrays.toString(intensityAndCCMatrix[i]));
+//		}
+//	}
 	
 	private class relevanceHandler implements ActionListener, ItemListener {
 
