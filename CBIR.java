@@ -47,7 +47,7 @@ public class CBIR extends JFrame {
 	private Double[][] intensityMatrix = new Double[100][26];
 	private Double[][] colorCodeMatrix = new Double[100][65];
 	private Double[][] intensityAndCCMatrix = new Double[100][90];
-	private Double[] featureMatrix;
+	private Double[] weight = new Double[89];
 	private Map<Double, Integer> distanceMap;
 	private Map<Double, Integer> distanceMap2;
 	private Map<Double, Integer> distanceMap3;
@@ -138,6 +138,7 @@ public class CBIR extends JFrame {
 
 		for (int i = 1; i < 101; i++) {
 			button[i] = new JButton();
+			relevantButton[i] = new JCheckBox("Relevant");
 			button[i].setSize(70, 90);
 			int height = button[i].getHeight();
 			int width = button[i].getWidth();
@@ -157,6 +158,8 @@ public class CBIR extends JFrame {
 			if (icon != null) {
 				button[i].setIcon(icon);
 				button[i].addActionListener(new IconButtonHandler(i, icon));
+				relevantButton[i].addActionListener(new weightHandler());
+				relevantButton[i].setActionCommand(String.valueOf(i));
 				buttonOrder[i] = i;
 				imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
 						.getIconWidth());
@@ -632,29 +635,22 @@ public class CBIR extends JFrame {
 			int pic = (picNo);
 			int picIntensity = 0;
 			double picSize = imageSize[pic+1];
-			//normalization();
 			
 			for (int i = 0; i < 100; i++) { 
 				Double temp[] = intensityAndCCMatrix[pic-1];
 				Double temp2[] = intensityAndCCMatrix[i];
-				
+				//updateWeight();
 				for (int j = 0; j < 89; j++) {
 					Double r1 = temp[j] / imageSize[pic+1];
 					Double r2 = temp2[j] / imageSize[i+1];
 					d += (0.01123596 * Math
-							.abs(r1  - r2));                           //intensityAndCCMatrix[pic]
-								
-					
-//					d = Math
-//					.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-//							- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+							.abs(r1  - r2));                      
 				}
 				
 				distance[i + 1] = d;
 				distanceMap3.put(d, i + 1);
 				d = 0.0;
 			}
-			System.out.println("hi");
 			distance[0] = 0.0;
 			Arrays.sort(distance);
 			
@@ -714,11 +710,13 @@ public class CBIR extends JFrame {
 		}
 
 	}
-//	private void normalization() {
-//		Double[][] feature = new Double[101][89];
-//		Double[] average = new Double[89];
-//		Double[] std = new Double[89];
-
+	private void updateWeight() {
+		for(int i = 0; i < 89; i++) {
+			for(int j = 1; j < 101; j++) {
+				
+			}
+		}
+	}
  public void normalization() {
 		Double[][] featureSet = new Double[101][89];
 		Double[] average = new Double[89];
@@ -746,7 +744,6 @@ public class CBIR extends JFrame {
 			average[j] /= 100;
 		}// end j
 
-
 		// calc standard dev.
 		for (int j = 0; j < 89; j++) {
 			for (int i = 1; i < 101; i++) {
@@ -758,8 +755,6 @@ public class CBIR extends JFrame {
 			standardDev[j] = Math.sqrt(standardDev[j]);
 
 		}// end j
-
-
 		// check zero case
 		double min;
 		if (standardDev[0] != 0.0)
@@ -770,7 +765,6 @@ public class CBIR extends JFrame {
 			if ((min > standardDev[i]) && (standardDev[i] != 0.0))
 				min = standardDev[i];
 		}// end if
-			// System.out.println("Minimum: " + min);
 
 		for (int i = 0; i < 89; i++) {
 			if ((standardDev[i] == 0.0) && (average[i] != 0.0)) {
@@ -778,10 +772,8 @@ public class CBIR extends JFrame {
 			}// end if
 
 		}// end for
-
-
 		// normalize featureSet
-		// System.out.println("Relevance Matrix: \n");
+
 		for (int i = 1; i < 101; i++) {
 			for (int j = 0; j < 89; j++) {
 				if (standardDev[j] == 0.0) {
@@ -790,102 +782,11 @@ public class CBIR extends JFrame {
 					intensityAndCCMatrix[i-1][j] = (featureSet[i][j] - average[j])
 							/ standardDev[j];
 			}// end for j
-				// System.out.println( Arrays.toString(relevanceMatrix[i]));
 		}// end for i
 
 		System.out.println("Finishing normalization Calculator ");
 	}// end normalizationCalculator
  
-		//Populate feature array with intensity and color code bins
-//		for(int i = 1; i < 101; i++) {
-//			for(int j = 1; j < 26; j++) {
-//				//System.out.println("intensityMatrix[i][j] = " + intensityMatrix[i-1][j] + "\nimageSize[i] = " + imageSize[i]);
-//				feature[i][j-1] = intensityMatrix[i-1][j] / imageSize[i];
-//			}
-//			for(int k = 25; k < 89; k++) {
-//				feature[i][k] = colorCodeMatrix[i-1][k - 25] / imageSize[i]; 
-//			}
-//		}
-//		// All original features have been added to the feature matrix
-//		// Getting average value for each column and save into the average array
-//		double averageTotal = 0;
-//		for(int i = 0; i < 89; i++) {
-//			for(int j = 1; j < 101; j++) {
-//				averageTotal += feature[j][i];
-//				//average[i] = average[i] + feature[j][i]; // Add all of the numbers in a column into the average array
-//			}
-//			averageTotal /= 100;
-//			average[i] = averageTotal;
-//			averageTotal = 0;
-//			//average[i] = average[i] / 100; // Divide the number of features by the number of images
-//			double total = 0; // Sum the total of the column data set
-//			/*
-//			 * 
-//			 * 		for (int j = 0; j < 89; j++) {
-//			for (int i = 1; i < 101; i++) {
-//				average[j] += featureSet[i][j];
-//			}// end i
-//			average[j] /= 100;
-//		}// end j
-//			 */
-//			//Calculate the standard deviation
-//			for(int j = 1; j < 101; j++) {
-//				System.out.println("total = " + total);
-//				System.out.println("total += Math.pow(feature[" + j + "][" +  i + "] - average[" + i + "], 2) = " + Math.pow(feature[j][i] - average[i], 2));
-//				total += Math.pow(Math.abs(feature[j][i] - average[i]), 2); 
-//			}
-//			for(int j = 1; j < 101; j++) {
-//				std[i] = Math.sqrt(total/100); 
-//				                              
-//			}
-////			for (int j = 0; j < 89; j++) {
-////				for (int i = 1; i < 101; i++) {
-////					standardDev[j] += Math.pow(
-////							Math.abs(featureSet[i][j] - average[j]), 2);
-////
-////				}// end i
-////				standardDev[j] /= 100; // size - 1
-////				standardDev[j] = Math.sqrt(standardDev[j]);
-////
-////			}// end j
-//			// Set normalization values into intensityAndCCMatrix
-//			for(int j = 1; j < 101; j++) {
-//				intensityAndCCMatrix[j-1][i] = (feature[j][i] - average[i]) / std[i];	
-//			}
-//// end for i
-//		}
-//		double min;
-//		if (std[0] != 0.0)
-//			min = std[0];
-//		else
-//			min = 1;
-//		for (int i = 1; i < 89; i++) {
-//			if ((min > std[i]) && (std[i] != 0.0))
-//				min = std[i];
-//		}// end if
-//			// System.out.println("Minimum: " + min);
-//
-//		for (int i = 0; i < 89; i++) {
-//			if ((std[i] == 0.0) && (average[i] != 0.0)) {
-//				std[i] = min * 0.5;
-//			}// end if
-//
-//		}// end for
-//
-//
-//		// normalize feature
-//		// System.out.println("Relevance Matrix: \n");
-//		for (int i = 1; i < 101; i++) {
-//			for (int j = 0; j < 89; j++) {
-//				if (std[j] == 0.0) {
-//					intensityAndCCMatrix[i-1][j] = 0.0;
-//				} else
-//					intensityAndCCMatrix[i-1][j] = (feature[i][j] - average[j])
-//							/ std[j];
-//			}// end for j
-//				// System.out.println( Arrays.toString(intensityAndCCMatrix[i]));
-//		}
-//	}
 	
 	private class relevanceHandler implements ActionListener, ItemListener {
 
@@ -901,7 +802,7 @@ public class CBIR extends JFrame {
 			setRelevanceButtons();
 		}
 	}
-
+    
 	private void setRelevanceButtons() {
 		switch (lastMethod) {
 		case "R" :
@@ -913,6 +814,7 @@ public class CBIR extends JFrame {
 
 			for (int i = 1; i < 101; i++) {
 				button[i] = new JButton();
+				relevantButton[i] = new JCheckBox();
 				button[i].setSize(70, 90);
 				int height = button[i].getHeight();
 				int width = button[i].getWidth();
@@ -1082,39 +984,43 @@ public class CBIR extends JFrame {
 			break;
 		case "I+CC":
 			distance = new double[101];
-			distanceMap = new HashMap<Double, Integer>();
-			d = 0;
+			distanceMap3 = new HashMap<Double, Integer>();
+			d = 0.0;
 			compareImage = 0;
-			pic = (picNo - 1);
+			pic = (picNo);
 			picIntensity = 0;
-			picSize = imageSize[pic];
-
-			for (int i = 0; i < 100; i++) {
-				for (int j = 1; j < 90; j++) {
-					d += Math
-							.abs((intensityAndCCMatrix[pic][j] / imageSize[pic + 1])
-									- (intensityAndCCMatrix[i][j] / imageSize[i + 1]));
+			picSize = imageSize[pic+1];
+			//normalization();
+			
+			for (int i = 0; i < 100; i++) { 
+				Double temp[] = intensityAndCCMatrix[pic-1];
+				Double temp2[] = intensityAndCCMatrix[i];
+				
+				for (int j = 0; j < 89; j++) {
+					Double r1 = temp[j] / imageSize[pic+1];
+					Double r2 = temp2[j] / imageSize[i+1];
+					d += (0.01123596 * Math.abs(r1  - r2));
 				}
+				
 				distance[i + 1] = d;
-				distanceMap.put(d, i + 1);
-				d = 0;
+				distanceMap3.put(d, i + 1);
+				d = 0.0;
 			}
+			distance[0] = 0.0;
 			Arrays.sort(distance);
-			// //////////////
 			for (int i = 1; i < 101; i++) {
 				button[i] = new JButton();
+				relevantButton[i] = new JCheckBox("Relevant");
 				button[i].setSize(70, 90);
 				int height = button[i].getHeight();
 				int width = button[i].getWidth();
 				button[i].setOpaque(false);
 				button[i].setContentAreaFilled(false);
 				button[i].setBorderPainted(false);
-				// ImageIcon icon;
-				// icon = new ImageIcon(getClass().getResource(
-				// "images/" + distanceMap.get(distance[i]) + ".jpg"));
+
 				ImageIcon icon2;
 				icon2 = new ImageIcon(getClass().getResource(
-						"images/" + distanceMap.get(distance[i]) + ".jpg"));
+						"images/" + distanceMap3.get(distance[i]) + ".jpg"));
 				Image img = icon2.getImage();
 				Image newimg = img.getScaledInstance(width + 120, height,
 						java.awt.Image.SCALE_SMOOTH);
@@ -1123,17 +1029,18 @@ public class CBIR extends JFrame {
 				if (icon != null) {
 					button[i].setIcon(icon);
 					button[i].addActionListener(new IconButtonHandler(
-							distanceMap.get(distance[i]), icon));
+							distanceMap3.get(distance[i]), icon));
+					relevantButton[i].addActionListener(new weightHandler());
+					relevantButton[i].setActionCommand(String.valueOf(i));
 					buttonOrder[i] = i;
 					imageSize[i] = (Double) (double) (icon.getIconHeight() * icon
 							.getIconWidth());
-
 				}
 			}
 			// repopulate the buttons
 			imageCount = 1;
 			for (int i = imageCount; i < 21; i++) {
-				panelBottom1.add(button[buttonOrder[i]]);
+				panelBottom1.add(button[buttonOrder[i]]);	
 			}// end for i
 			imageButNo = 0;
 			endImage = imageCount + 20;
@@ -1143,6 +1050,8 @@ public class CBIR extends JFrame {
 					imageButNo = buttonOrder[i];
 					panelBottom1.add(button[imageButNo]);
 					if (relevantSelected) {
+						relevantButton[imageButNo].addActionListener(new weightHandler());
+						//relevance.addItemListener(new relevanceHandler());
 						panelBottom1.add(relevantButton[imageButNo]);
 					}
 					imageCount++;
@@ -1150,6 +1059,7 @@ public class CBIR extends JFrame {
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
+			System.out.println();
 			break;
 		case "CC" :
 			distance = new double[101];
@@ -1193,7 +1103,6 @@ public class CBIR extends JFrame {
 				ImageIcon icon;
 				icon = new ImageIcon(newimg);
 				if (icon != null) {
-
 					button[i].setIcon(icon);
 					button[i].addActionListener(new IconButtonHandler(
 							distanceMap2.get(distance[i]), icon));
@@ -1223,12 +1132,18 @@ public class CBIR extends JFrame {
 				panelBottom1.revalidate();
 				panelBottom1.repaint();
 			}
-
-			// ///////////////////
-			// /your code///
-			// ///////////////
-
 		}
+	}
+	private class weightHandler implements ActionListener {
+
+		
+		public void actionPerformed(ActionEvent arg0) {
+			int imgSelected = Integer.parseInt(arg0.getActionCommand());
+			System.out.println(imgSelected);
+			
+		}
+
+
 	}
 
 }
