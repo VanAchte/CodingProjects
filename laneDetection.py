@@ -50,9 +50,9 @@ for x in range(0, len(smoothLines)):
     for x1,y1,x2,y2 in smoothLines[x]:
         cv2.line(testImg,(x1,y1),(x2,y2),(0,255,0),2)
 
-implot = ax.imshow(imgEdges)
-
-plt.show()
+# implot = ax.imshow(imgEdges)
+#
+# plt.show()
 # cv2.imshow('after', testImg)
 # cv2.imshow('edges', imgEdges)
 # cv2.waitKey(0)
@@ -81,17 +81,60 @@ challCoord = [(531, 462), (772, 462), (1104, 666), (211, 666)]
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
 
-cap = cv2.VideoCapture('testvideos/calibration/DSCN0622.mov')
+cap = cv2.VideoCapture('testvideos/calibration/DSCN0612.mov')
 
 # Get current time to calculate FPS
 # Initial frames processed in the beginning == 0
 
 numFrames = 0
 coordList = []
+numPoints = 0
+averageX = 0
+averageY = 0
+averageX2 = 0
+averageY2 = 0
+
+def findRightEdge(angle, x1, y1, x2, y2):
+    global averageX, averageY, averageX2, averageY2,numPoints
+    # This section finds lines drawn on the right hand side of the video
+    # Specifically looks to find an edge in the right hand side of the image.
+    if x2 > 320 and y2 > 240:
+        # if lineDrawn:
+        #     continue
+        print("angle = ", angle)
+        # lineDrawn = True
+        # if(numFrames % fps == 0):
+        #     coordList.append([x1,y1])
+        coordList.append([x1, y1])
+        if numFrames % 50 == 0:
+            averageX = 0
+            averageY = 0
+            numPoints = 0
+            averageX2 = 0
+            averageY2 = 0
+        averageX += x1
+        averageX2 += x2
+        averageY2 += y2
+        averageY += y1
+        numPoints += 1
+        print("x1 =", x1)
+        print("averageX = ", averageX)
+        print("averageY =", averageY)
+
+
+def findLeftEdge():
+    print()
+
+def findEdge(angle, x1, y1, x2, y2):
+    if angle > 0:
+        findRightEdge(angle, x1, y1, x2, y2)
+    else:
+        findLeftEdge()
+
 while (cap.isOpened()):
     # Get number of frames per second
     fps = cap.get(cv2.CAP_PROP_FPS)
-    numFrames += 1
+
 
     # print("numFrames", numFrames)
     # print("fps =",fps)
@@ -114,38 +157,39 @@ while (cap.isOpened()):
     im = cv2.bilateralFilter(dilation, 5, 17, 17)
     # cv2.imshow('im',im)
     lines = cv2.HoughLinesP(im, 1, np.pi / 180.0, 50, np.array([]), 100, 15)
-    min_x = 640
-    oneLine = 0
+    lineDrawn = False
     if lines is not None:
         for [[x1, y1, x2, y2]] in lines:
-            # Makes sure we get one line for each frame
-            if oneLine == 0:
-                oneLine = 1
+
+                #print(x1,x2,y1,y2)
                 dx, dy = x2 - x1, y2 - y1
                 angle = np.arctan2(dy, dx) * 180 / (np.pi)
 
-                if angle > 0:
-                    if abs(y2 - 210) <= 10 and x2 < min_x:
-                        min_x = x2
-                    cv2.circle(frame, (246, 215), 5, (0, 0, 255), -1)
-                    cv2.circle(frame, (x2, y2), 5, (255, 0, 0), -1)
-                    cv2.line(frame, (246, 215), (x2, y2), (0, 255, 0), 2)
-                    if(numFrames % fps == 0):
-                        coordList.append([x1,y1])
+                cv2.line(frame, (320, 0), (320, 480), (0, 0, 0), 2)
+                findEdge(angle, x1, y1, x2, y2)
 
-        cv2.imshow('frame', frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):#if cv2.waitKey(20) == 27:
-            break
+                #if angle > 0:
+
+        if numPoints > 0:
+            cv2.circle(frame, (int(averageX / numPoints), int(averageY / numPoints)), 5, (0, 0, 255), -1)
+            cv2.circle(frame, (int(averageX2 / numPoints), int(averageY2 / numPoints)), 5, (255, 0, 0), -1)
+            cv2.line(frame, (int(averageX / numPoints), int(averageY / numPoints)), (int(averageX2 / numPoints), int(averageY2 / numPoints)), (0, 255, 0), 2)
+    numFrames += 1
+    cv2.imshow('frame', frame)
+    # cv2.waitKey(0)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):#if cv2.waitKey(20) == 27:
+       break
 
 cap.release()
 cv2.destroyAllWindows()
-averageX = 0
-averageY = 0
-numCoords = 0
-for coord in coordList:
-    print("coords =",coord)
-    averageX += coord[0]
-    averageY += coord[1]
-    numCoords += 1
-print("averageX =", averageX / numCoords)
-print("averageY =", averageY / numCoords)
+# averageX = 0
+# averageY = 0
+# numCoords = 0
+# for coord in coordList:
+#     print("coords =",coord)
+#     averageX += coord[0]
+#     averageY += coord[1]
+#     numCoords += 1
+# print("averageX =", averageX / numCoords)
+# print("averageY =", averageY / numCoords)
