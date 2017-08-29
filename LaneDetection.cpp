@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 	//imshow("yellowOnly", yellowOnly);
 	//waitKey();
 
-	VideoCapture cap("video3.mp4");
+	VideoCapture cap("video9.mp4");
 	if (!cap.isOpened()) {
 		return -1;
 	}
@@ -79,12 +79,14 @@ int main(int argc, char *argv[]) {
 				Point(426, 480), Scalar(0, 0, 0), 3, 8);
 
 			vector<Vec4i> lines;
-			double minLineLength = 100;
+			double minLineLength = 80;
 			double maxLineGap = 10;
+
 			HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
+			double longestLine = 0;
+			Point longestLines[2];
 			for (size_t i = 0; i < lines.size(); i++) {
 				//cout << lines[i] << endl;
-				double longestLine = 0;
 				int x1 = lines[i][0];
 				int y1 = lines[i][1];
 				int x2 = lines[i][2];
@@ -117,6 +119,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	cap.release();
-	destroyAllWindows();
+	//destroyAllWindows();
 	return 0;
 }
