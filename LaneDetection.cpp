@@ -5,6 +5,8 @@
 
 using namespace std;
 using namespace cv;
+//Temp global
+Mat frame;
 
 Mat yellowFilter(const Mat& src) {
 	assert(src.type() == CV_8UC3);
@@ -20,21 +22,27 @@ Mat yellowFilter(const Mat& src) {
 	//waitKey(0);
 
 	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
-	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
-	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
+	inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
+	//inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
 	return yellowOnly;
 }
 
 vector<Point> initFitLine(const vector<vector<Point>>& points, int index) {
-
+	//cout << "Start of initFitLine" << endl;
+	waitKey(200);
 	int size = points[index].size();
 	vector<Point> bestFit;
-	if (size > 0) {
-		for (size_t i = 0; i < size; i++) {
-			bestFit.push_back(points[index][i]);
-		}
+if (size > 0) {
+	for (size_t i = 0; i < size; i++) {
+		//cout << "points[index][" << i << "] = " << points[index][i] << endl;
+		bestFit.push_back(points[index][i]);
+		circle(frame, Point(points[index][i]), 5, (255, 0, 0), -1);
 	}
-	return bestFit;
+}
+//waitKey(0);
+//cout << "index = " << index << endl;
+
+return bestFit;
 }
 int main(int argc, char *argv[]) {
 	Mat input = imread(argv[1]);
@@ -72,7 +80,7 @@ int main(int argc, char *argv[]) {
 	int processFrames = 12;
 	int processCount = 0;
 	while (cap.isOpened()) {
-		Mat frame;
+		frame;
 		cap >> frame;
 		if (frame.empty()) {
 			break;
@@ -108,7 +116,7 @@ int main(int argc, char *argv[]) {
 
 
 			Vec4f fitLines;
-			
+
 			/// Get the moments
 			vector<Moments> mu(contours.size());
 			for (int i = 0; i < contours.size(); i++)
@@ -123,27 +131,53 @@ int main(int argc, char *argv[]) {
 				mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
 			}
 			/// Draw contours
-			Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+
+			// Find the largest contour, testing currently
+			int largestArea = 0;
+			int largestContourIndex = 0;
+			Rect boundingRectangle;
 			for (int i = 0; i < contours.size(); i++) {
+				double area = contourArea(contours[i], false);
+				if (area > largestArea) {
+					largestArea = area;
+					largestContourIndex = i;
+					boundingRectangle = boundingRect(contours[i]);
+				}
+            }
+			// End of largest contour search
+			Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+			//for (int i = 0; i < contours.size(); i++) {
 				Scalar color = Scalar(0, 0, 255);
 				Scalar color2 = Scalar(127, 0, 255);
+				Scalar color3 = Scalar(255, 0, 0);
 				//cout << "contours[" << i << "] = " << contours[i][0] << endl;
-
-				drawContours(drawing, contours, i, color, 1, 8, hierarchy, 0, Point());
-				circle(drawing, mc[i], 4, color2, -1, 8, 0);
-				Vec4f bestFitLine;
 				
 
-				//vector<Point> bestFitPoints = initFitLine(contours, i);
-				//fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
-				//line(drawing, Point(bestFitLine[0],bestFitLine[1]), Point(bestFitLine[2],bestFitLine[3]), color, 1, 8);
+				drawContours(drawing, contours, largestContourIndex, color, 1, 8, hierarchy, 0, Point());
+				//circle(drawing, mc[i], 4, color2, -1, 8, 0);
+				Vec4f bestFitLine;
+
+
+				vector<Point> bestFitPoints = initFitLine(contours, largestContourIndex);
+				int averageX = 0;
+				int averageY = 0;
+				int numPoints = bestFitPoints.size();
+				for (int k = 0; k < numPoints; k++) {
+					averageX += bestFitPoints[k].x;
+					averageY += bestFitPoints[k].y;
+				}
+				averageX /= numPoints;
+				averageY /= numPoints;
+				circle(frame, Point(averageX,averageY), 4, color3, -1, 8, 0);
+				fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
+				line(drawing, Point(bestFitLine[0],bestFitLine[1]), Point(bestFitLine[2],bestFitLine[3]), color, 1, 8);
 				//cout << "bestFitLine = " << bestFitLine << endl;
 				//cout << "lines[0] = " << lines[0] << endl;
 
 				imshow("Contours", drawing);
 				
 				//waitKey(0);
-			}
+			//}
 
 			/////////////////////////////////////////////
 			
@@ -162,32 +196,32 @@ int main(int argc, char *argv[]) {
 			
 
 			double longestLine = 0;
-			for (size_t i = 0; i < lines.size(); i++) {
-				//cout << lines[i] << endl;
-				int x1 = lines[i][0];
-				int y1 = lines[i][1];
-				int x2 = lines[i][2];
-				int y2 = lines[i][3];
-				
-				// If the line is parallel and above the middle of the image continue through the loop
-				if (y2 < 220 && y1 < 220) {
-					continue;
-				}
+			//for (size_t i = 0; i < lines.size(); i++) {
+			//	//cout << lines[i] << endl;
+			//	int x1 = lines[i][0];
+			//	int y1 = lines[i][1];
+			//	int x2 = lines[i][2];
+			//	int y2 = lines[i][3];
+			//	
+			//	// If the line is parallel and above the middle of the image continue through the loop
+			//	//if (y2 < 220 && y1 < 220) {
+			//	//	continue;
+			//	//}
 
-				Point a(x1, y1);
-				Point b(x2, y2);
-				double res = norm(a - b);
-				longestLine = res;
-				line(frame, Point(x1, y1),
-				Point(x2, y2), Scalar(0, 0, 255), 3, 8);
-				float angle = atan2(y1 - y2, x1 - x2);
-				//cout << "angle = " << angle << endl;
-				//line(frame, Point(bestFitLine[0], bestFitLine[1]),
-				//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
-				//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
-				//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
+			//	Point a(x1, y1);
+			//	Point b(x2, y2);
+			//	double res = norm(a - b);
+			//	longestLine = res;
+			//	line(frame, Point(x1, y1),
+			//	Point(x2, y2), Scalar(0, 0, 255), 3, 8);
+			//	float angle = atan2(y1 - y2, x1 - x2);
+			//	//cout << "angle = " << angle << endl;
+			//	//line(frame, Point(bestFitLine[0], bestFitLine[1]),
+			//	//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
+			//	//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
+			//	//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
 
-			}
+			//}
 			//imshow("canny_output", canny_output);
 			imshow("yellowOnly", yellowOnly);
 			imshow("frame", frame);
