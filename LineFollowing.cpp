@@ -1,161 +1,3 @@
-//#include <iostream>
-//#include <opencv2/core/core.hpp>
-//#include <opencv2/highgui/highgui.hpp>
-//#include "opencv2/imgproc/imgproc.hpp"
-//#include <stdlib.h>
-//#include <stdio.h>
-//
-//using namespace cv;
-//using namespace std;
-//
-//Mat src, src_gray;
-//Mat dst, detected_edges;
-//
-//int edgeThresh = 1;
-//int lowThreshold = 69;
-//int const max_lowThreshold = 200;
-//int ratio = 3;
-//int kernel_size = 3;
-//char* window_name = "Edge Map";
-//
-//void CannyThreshold(int, void*) {
-//	 //yellowuce noise with a kernel 3x3
-//	blur(src_gray, detected_edges, Size(3, 3));
-//	imshow("bluryellow", detected_edges);
-//	 //Canny detector
-//	Canny(detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size);
-//
-//	 //Using Canny's output as a mask, we d-isplay our result
-//	dst = Scalar::all(0);
-//
-//	src.copyTo(dst, detected_edges);
-//	imshow(window_name, dst);
-//}
-//int main(int argc, char *argv[]) {
-//	cout << "Hello World" << endl;
-//	/// Load an image
-//	src = imread(argv[1]);
-//
-//	if (!src.data) {
-//		return -1;
-//	}
-//
-//	/// Create a matrix of the same type and size as src (for dst)
-//	dst.create(src.size(), src.type());
-//
-//	/// Convert the image to grayscale
-//	cvtColor(src, src_gray, CV_BGR2GRAY);
-//
-//	/// Create a window
-//	namedWindow(window_name, CV_WINDOW_AUTOSIZE);
-//
-//	/// Create a Trackbar for user to enter threshold
-//	createTrackbar("Min Threshold:", window_name, &lowThreshold, max_lowThreshold, CannyThreshold);
-//
-//	/// Show the image
-//	CannyThreshold(0, 0);
-//	Mat result;
-//	Mat src_hsv;
-//	cvtColor(src, src_hsv, CV_BGR2HSV);
-//	//imshow("dst", dst);
-//	int low_r = 133, low_g = 41, low_b = 23;
-//	int high_r = 255, high_g = 150, high_b = 40;
-//	//cvtColor(detected_edges, detected_edges, CV_BGR2HSV);
-//	inRange(src_hsv, Scalar(low_b, low_g, low_r), Scalar(high_b, high_g, high_r), result);
-//	//cvInRangeS(detected_edges, cvScalar(20, 100, 100), cvScalar(30, 255, 255), imgThreshed);
-//	vector<Vec4i> lines;
-//	HoughLinesP(detected_edges, lines, 1, CV_PI / 180, 80, 10, 100);
-//	//for (size_t i = 0; i < lines.size(); i++) {
-//	//	//cout << lines[i] << endl;
-//	//	line(dst, Point(lines[i][0], lines[i][1]),
-//	//		Point(lines[i][2], lines[i][3]), Scalar(0, 0, 255), 3, 8);
-//	//}
-//	imshow("src", src);
-//	imshow("result", result);
-//	imshow("src_hsv", src_hsv);
-//
-//	/// Wait until user exit program by pressing a key
-//	waitKey(0);
-//	return 0;
-//}
-//#include <opencv2/opencv.hpp>
-//#include <iostream>
-//
-//using namespace std;
-//using namespace cv;
-//
-//Mat img;
-//Mat img_blur;
-//Mat src, src_gray;
-//Mat dst, detected_edges;
-//
-//int edgeThresh = 1;
-//int lowThreshold = 10;
-//int const max_lowThreshold = 200;
-//int ratio = 3;
-//int kernel_size = 3;
-//char* window_name = "Edge Map";
-//
-//
-//void CallBackFunc(int event, int x, int y, int flags, void* userdata)
-//{
-//	if (event == EVENT_MOUSEMOVE) {
-//		cout << "Pixel (" << x << ", " << y << "): " << img.at<Vec3b>(y, x) << endl;
-//	}
-//}
-//
-//int main(int argc, char *argv[]) {
-//	// Read image from file 
-//
-//	img = imread(argv[1]);
-//	//blur(img, img_blur, Size(3, 3));
-//	
-//	//Canny(detected_edges, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size);
-//	// Check it loaded
-//	cout << "program running" << endl;
-//	if (img.empty()) {
-//		cout << "Error loading the image" << endl;
-//		exit(1);
-//	}
-//	GaussianBlur(img, img_blur, Size(29, 29), 0, 0);
-//	Mat result;
-//	Mat src_hsv;
-//	cvtColor(img, src_hsv, CV_BGR2HSV);
-//	//imshow("dst", dst);
-//	int low_r = 133, low_g = 41, low_b = 23;
-//	int high_r = 255, high_g = 150, high_b = 40;
-//	//cvtColor(detected_edges, detected_edges, CV_BGR2HSV);
-//	inRange(src_hsv, Scalar(low_b, low_g, low_r), Scalar(high_b, high_g, high_r), result);
-//	imshow("ImageDisplay", result);
-//	//Create a window
-//	namedWindow("ImageDisplay", 1);
-//
-//	Canny(img_blur, detected_edges, lowThreshold, lowThreshold*ratio, kernel_size);
-//	//createTrackbar("Min Threshold:", window_name, &lowThreshold, max_lowThreshold, CannyThreshold);
-//	
-//
-//	// Register a mouse callback
-//	setMouseCallback("ImageDisplay", CallBackFunc, nullptr);
-//
-//	vector<Vec4i> lines;
-//	HoughLinesP(detected_edges, lines, 1, CV_PI / 180, 80, 1, 10);
-//	for (size_t i = 0; i < lines.size(); i++) {
-//		cout << "line drawn" << endl;
-//		cout << lines[i] << endl;
-//		line(detected_edges, Point(lines[i][0], lines[i][1]),
-//			Point(lines[i][2], lines[i][3]), Scalar(0, 0, 255), 3, 8);
-//	}
-//	imshow("detected_edges2", detected_edges);
-//
-//	//imshow("ImageDisplay33", img);
-//	// Main loop
-//	while (true) {
-//		
-//		imshow("bluryellow image", img_blur);
-//		//imshow("img", img);
-//		waitKey(50);
-//	}
-//}
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -163,50 +5,293 @@
 
 using namespace std;
 using namespace cv;
+//Temp global
+Mat frame;
 
-Mat yellowFilter(const Mat& src)
-{
+Mat yellowFilter(const Mat& src) {
 	assert(src.type() == CV_8UC3);
 
 	Mat yellowOnly;
 	Mat src_blur, src_hls;
-	//cvtColor(src, src_hsv, CV_BGR2HSV);
-	//imshow()
-	GaussianBlur(src, src_blur, Size(1, 1), 0, 0);
-	imshow("src_blur", src_blur);
+
+	GaussianBlur(src, src_blur, Size(25, 25), 0, 0);
 	cvtColor(src_blur, src_hls, CV_BGR2HLS);
-	//imshow("src_hls", src_hls);
-	//inRange(src_blur, Scalar(0, 180, 225), Scalar(170, 255, 255), yellowOnly);
-	
-	inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
+	rectangle(src_hls, Point(0, 0),
+		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
+	//imshow("src_hls with black rect", src_hls);
+	//waitKey(0);
+
+	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
+	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
+	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
 	return yellowOnly;
 }
 
+vector<Point> initFitLine(const vector<vector<Point>>& points, int index) {
+	//cout << "Start of initFitLine" << endl;
+	waitKey(200);
+	int size = points[index].size();
+	vector<Point> bestFit;
+	if (size > 0) {
+		for (size_t i = 0; i < size; i++) {
+			//cout << "points[index][" << i << "] = " << points[index][i] << endl;
+			bestFit.push_back(points[index][i]);
+			circle(frame, Point(points[index][i]), 5, (255, 0, 0), -1);
+		}
+	}
+	//waitKey(0);
+	//cout << "index = " << index << endl;
+
+	return bestFit;
+}
 int main(int argc, char *argv[]) {
 	Mat input = imread(argv[1]);
 	if (input.empty()) {
 		cout << "Error loading the image" << endl;
 		exit(1);
 	}
-	Mat input_blur;
-	imshow("input", input);
-	waitKey();
+	//Mat input_blur;
+	//imshow("input", input);
+	//waitKey();
 
-	Mat yellowOnly = yellowFilter(input);
-	
-	vector<Vec4i> lines;
-	HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, 1, 10);
-	for (size_t i = 0; i < lines.size(); i++) {
-		cout << "line drawn" << endl;
-		cout << lines[i] << endl;
-		line(input, Point(lines[i][0], lines[i][1]),
-			Point(lines[i][2], lines[i][3]), Scalar(0, 0, 255), 3, 8);
+	//Mat yellowOnly = yellowFilter(input);
+
+	//vector<Vec4i> lines;
+	//double minLineLength = 100;
+	//double maxLineGap = 15;
+	//HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
+	//for (size_t i = 0; i < lines.size(); i++) {
+	//	//cout << lines[i] << endl;
+	//	line(input, Point(lines[i][0], lines[i][1]),
+	//		Point(lines[i][2], lines[i][3]), Scalar(0, 0, 255), 3, 8);
+	//	circle(input, Point(lines[i][0], lines[i][1]), 5, (0, 0, 255), -1);
+	//	circle(input, Point(lines[i][2], lines[i][3]), 5, (255, 0, 0), -1);
+	//}
+	//imshow("input", input);
+	//imshow("yellowOnly", yellowOnly);
+	//waitKey();
+
+	VideoCapture cap("video3.mp4");
+	if (!cap.isOpened()) {
+		return -1;
 	}
-	imshow("input", input);
-	imshow("yellowOnly", yellowOnly);
-	waitKey();
+	// @processFrames: number of frames to skip processing as the camera is initially calibrating
+	// @process count: counter for number of frames, set to 12 as a default
+	int processFrames = 12;
+	int processCount = 0;
+	while (cap.isOpened()) {
+		frame;
+		cap >> frame;
+		if (frame.empty()) {
+			break;
+		}
+		processCount++;
+		if (processCount > processFrames) {
 
-	// detect squares after filtering...
+			// Masks image for yellow color
+			Mat yellowOnly = yellowFilter(frame);
+			// Draw a line across middle of frame for ROI
+			line(frame, Point(0, 220),
+				Point(640, 220), Scalar(0, 0, 0), 3, 8);
+			// Draw line segments for left, right, and middle
+			line(frame, Point(213, 220),
+				Point(213, 480), Scalar(0, 0, 0), 3, 8);
+			line(frame, Point(426, 220),
+				Point(426, 480), Scalar(0, 0, 0), 3, 8);
 
+			//////////////////////////////////////////////
+			int thresh = 50;
+			Mat input_blur;
+			GaussianBlur(input, input_blur, Size(25, 25), 0, 0);
+			Mat canny_output;
+			vector<vector<Point> > contours;
+			vector<Vec4i> hierarchy;
+
+
+			/// Detect edges using canny
+			Canny(yellowOnly, canny_output, thresh, thresh * 2, 3);
+			/// Find contours
+			findContours(yellowOnly, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+			//rectangle(frame, Point(130, 350),
+			//	Point(500, 400), Scalar(0, 255, 0), 1, 8);
+
+			Vec4f fitLines;
+
+			/// Get the moments
+			vector<Moments> mu(contours.size());
+			for (int i = 0; i < contours.size(); i++) {
+				mu[i] = moments(contours[i], false);
+			}
+
+			///  Get the mass centers:
+			vector<Point2f> mc(contours.size());
+			for (int i = 0; i < contours.size(); i++) {
+				mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
+			}
+			/// Draw contours
+
+			// Find the largest contour, testing currently
+			int largestArea = 0;
+			int largestContourIndex = 0;
+
+			Rect boundingRectangle;
+			// Iterate through all the contours
+			int contourSize = contours.size();
+			if (contourSize > 0) {
+				for (int i = 0; i < contourSize; i++) {
+					// Find the contour with the greatest area
+					double area = contourArea(contours[i], false);
+					if (area > largestArea) {
+						largestArea = area;
+						largestContourIndex = i;
+						boundingRectangle = boundingRect(contours[i]);
+					}
+
+					//cout << "contours[" << i << "] = " << contours[i] << endl;
+					//waitKey(0);
+					// Find the left most point
+					//if (contours[i].x > leftMostPoint) {
+					//	leftMostPoint = contours[i].x;
+					//}
+
+				}
+				// Iterate through each point of 
+
+
+				//cout << "Largest area = " << largestArea << endl;
+				// End of largest contour search
+				Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+				//for (int i = 0; i < contours.size(); i++) {
+				Scalar color = Scalar(0, 0, 255);
+				Scalar color2 = Scalar(127, 0, 255);
+				Scalar color3 = Scalar(255, 0, 0);
+				//cout << "contours[" << i << "] = " << contours[i][0] << endl;
+
+
+				drawContours(drawing, contours, largestContourIndex, color, 1, 8, hierarchy, 0, Point());
+				circle(drawing, mc[largestContourIndex], 4, color, -1, 8, 0);
+
+				//circle(drawing, mc[i], 4, color2, -1, 8, 0);
+				//Vec4f bestFitLine;
+
+
+				vector<Point> bestFitPoints = initFitLine(contours, largestContourIndex);
+				int averageX = 0;
+				int averageY = 0;
+				int numPoints = bestFitPoints.size();
+				for (int k = 0; k < numPoints; k++) {
+					averageX += bestFitPoints[k].x;
+					averageY += bestFitPoints[k].y;
+				}
+				averageX /= numPoints;
+				averageY /= numPoints;
+				circle(frame, Point(averageX, averageY), 4, color3, -1, 8, 0);
+				//fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
+				//line(drawing, Point(bestFitLine[0], bestFitLine[1]), Point(bestFitLine[2], bestFitLine[3]), color, 1, 8);
+
+
+				imshow("Contours", drawing);
+			}
+			//waitKey(0);
+			//}
+
+			/////////////////////////////////////////////
+			
+
+
+
+			// Create a vectorwhich contains 4 integers in each element (coordinates of the line)
+			vector<Vec4i> lines;
+
+
+			// Set limits on line detection
+			//Good value here
+			//double minLineLength = 80;
+			double minLineLength = 80;
+			double maxLineGap = 5;
+
+			HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
+
+			int numLines = lines.size();
+			double longestLine = 0;
+
+			Point highestPoint(0, 0);
+			Point lowestPoint(0, 0);
+
+			for (size_t i = 0; i < numLines; i++) {
+				//cout << lines[i] << endl;
+				int x1 = lines[i][0];
+				int y1 = lines[i][1];
+				int x2 = lines[i][2];
+				int y2 = lines[i][3];
+				
+				if (y1 < y2) {
+					highestPoint.y += y1;
+					highestPoint.x += x1;
+					lowestPoint.y += y2;
+					lowestPoint.x += x2;
+				} else {
+					highestPoint.y += y2;
+					highestPoint.x += x2;
+					lowestPoint.y += y1;
+					lowestPoint.x += x1;
+				}
+
+				
+				cout << "y1 = " << y1 << " y2 = " << y2 << endl;
+				//cout << "Point 1 = (" << x1 << ", " << y1 << "). Point 2 = (" << x2 << ", " << y2 << ")" << endl;
+				// If the line is parallel and above the middle of the image continue through the loop
+				//if (y2 < 220 && y1 < 220) {
+				//	continue;
+				//}
+
+				Point a(x1, y1);
+				Point b(x2, y2);
+				double res = norm(a - b);
+				longestLine = res;
+				//line(frame, Point(x1, y1),
+				//Point(x2, y2), Scalar(0, 0, 255), 3, 8);
+				//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
+				//circle(frame, Point(x2, y2), 5, (0, 255, 0), -1);
+				float angle = atan2(y1 - y2, x1 - x2);
+				//cout << "angle = " << angle << endl;
+				if(x2 - x1 != 0) {
+					int slope = (y2 - y1) / (x2 - x1);
+					//cout << "Slope = " << slope << endl;
+				}
+
+				//line(frame, Point(bestFitLine[0], bestFitLine[1]),
+				//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
+				//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
+				//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
+
+			}
+
+			if (numLines > 0) {
+				highestPoint.y /= numLines;
+				highestPoint.x /= numLines;
+				lowestPoint.y /= numLines;
+				lowestPoint.x /= numLines;
+				line(frame, highestPoint,
+					lowestPoint, Scalar(0, 0, 255), 3, 8);
+			}
+			
+
+			// Draw borders for turn radius
+			for (int i = 0; i < 10; i++) {
+				int interval = 64;
+				line(frame, Point(interval * i, 480), Point(interval * i, 0), Scalar(255, 0, 0), 1, 8);
+			}
+			//imshow("canny_output", canny_output);
+			imshow("yellowOnly", yellowOnly);
+			imshow("frame", frame);
+			if (waitKey(1) == 27) {
+				break;
+			}
+		}
+	}
+	cap.release();
+	//destroyAllWindows();
 	return 0;
 }
