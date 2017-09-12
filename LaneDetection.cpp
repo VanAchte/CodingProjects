@@ -22,8 +22,8 @@ Mat yellowFilter(const Mat& src) {
 	//waitKey(0);
 
 	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
-	inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
-	//inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
+	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
+	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
 	return yellowOnly;
 }
 
@@ -32,17 +32,17 @@ vector<Point> initFitLine(const vector<vector<Point>>& points, int index) {
 	waitKey(200);
 	int size = points[index].size();
 	vector<Point> bestFit;
-if (size > 0) {
-	for (size_t i = 0; i < size; i++) {
-		//cout << "points[index][" << i << "] = " << points[index][i] << endl;
-		bestFit.push_back(points[index][i]);
-		circle(frame, Point(points[index][i]), 5, (255, 0, 0), -1);
+	if (size > 0) {
+		for (size_t i = 0; i < size; i++) {
+			//cout << "points[index][" << i << "] = " << points[index][i] << endl;
+			bestFit.push_back(points[index][i]);
+			circle(frame, Point(points[index][i]), 5, (255, 0, 0), -1);
+		}
 	}
-}
-//waitKey(0);
-//cout << "index = " << index << endl;
+	//waitKey(0);
+	//cout << "index = " << index << endl;
 
-return bestFit;
+	return bestFit;
 }
 int main(int argc, char *argv[]) {
 	Mat input = imread(argv[1]);
@@ -76,9 +76,12 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 	// @processFrames: number of frames to skip processing as the camera is initially calibrating
-	// @process count: counter for number of frames, set to 12 as a default
-	int processFrames = 12;
+	// @process count: counter for number of frames, set to 15 as a default
+	int processFrames = 15;
 	int processCount = 0;
+	int numAvgLines = 0;
+	Point topAvg(0, 0);
+	Point botAvg(0, 0);
 	while (cap.isOpened()) {
 		frame;
 		cap >> frame;
@@ -87,7 +90,6 @@ int main(int argc, char *argv[]) {
 		}
 		processCount++;
 		if (processCount > processFrames) {
-
 			// Masks image for yellow color
 			Mat yellowOnly = yellowFilter(frame);
 			// Draw a line across middle of frame for ROI
@@ -113,49 +115,67 @@ int main(int argc, char *argv[]) {
 			/// Find contours
 			findContours(yellowOnly, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-
+			//rectangle(frame, Point(130, 350),
+			//	Point(500, 400), Scalar(0, 255, 0), 1, 8);
 
 			Vec4f fitLines;
-
+			
 			/// Get the moments
 			vector<Moments> mu(contours.size());
-			for (int i = 0; i < contours.size(); i++)
-			{
+			for (int i = 0; i < contours.size(); i++) {
 				mu[i] = moments(contours[i], false);
 			}
 
 			///  Get the mass centers:
 			vector<Point2f> mc(contours.size());
-			for (int i = 0; i < contours.size(); i++)
-			{
+			for (int i = 0; i < contours.size(); i++) {
 				mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
 			}
 			/// Draw contours
 
-			// Find the largest contour, testing currently
+			// Find the largest contour
 			int largestArea = 0;
 			int largestContourIndex = 0;
+
 			Rect boundingRectangle;
-			for (int i = 0; i < contours.size(); i++) {
-				double area = contourArea(contours[i], false);
-				if (area > largestArea) {
-					largestArea = area;
-					largestContourIndex = i;
-					boundingRectangle = boundingRect(contours[i]);
+			// Iterate through all the contours
+			int contourSize = contours.size();
+			if (contourSize > 0) {
+				for (int i = 0; i < contourSize; i++) {
+					// Find the contour with the greatest area
+					double area = contourArea(contours[i], false);
+					if (area > largestArea) {
+						largestArea = area;
+						largestContourIndex = i;
+						boundingRectangle = boundingRect(contours[i]);
+					}
+
+					//cout << "contours[" << i << "] = " << contours[i] << endl;
+					//waitKey(0);
+					// Find the left most point
+					//if (contours[i].x > leftMostPoint) {
+					//	leftMostPoint = contours[i].x;
+					//}
+
 				}
-            }
-			// End of largest contour search
-			Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
-			//for (int i = 0; i < contours.size(); i++) {
+				// Iterate through each point of 
+
+
+				//cout << "Largest area = " << largestArea << endl;
+				// End of largest contour search
+				Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+				//for (int i = 0; i < contours.size(); i++) {
 				Scalar color = Scalar(0, 0, 255);
 				Scalar color2 = Scalar(127, 0, 255);
 				Scalar color3 = Scalar(255, 0, 0);
 				//cout << "contours[" << i << "] = " << contours[i][0] << endl;
-				
+
 
 				drawContours(drawing, contours, largestContourIndex, color, 1, 8, hierarchy, 0, Point());
+				circle(drawing, mc[largestContourIndex], 4, color, -1, 8, 0);
+
 				//circle(drawing, mc[i], 4, color2, -1, 8, 0);
-				Vec4f bestFitLine;
+				//Vec4f bestFitLine;
 
 
 				vector<Point> bestFitPoints = initFitLine(contours, largestContourIndex);
@@ -168,59 +188,115 @@ int main(int argc, char *argv[]) {
 				}
 				averageX /= numPoints;
 				averageY /= numPoints;
-				circle(frame, Point(averageX,averageY), 4, color3, -1, 8, 0);
-				fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
-				line(drawing, Point(bestFitLine[0],bestFitLine[1]), Point(bestFitLine[2],bestFitLine[3]), color, 1, 8);
-				//cout << "bestFitLine = " << bestFitLine << endl;
-				//cout << "lines[0] = " << lines[0] << endl;
+				circle(frame, Point(averageX, averageY), 4, color3, -1, 8, 0);
+				//fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
+				//line(drawing, Point(bestFitLine[0], bestFitLine[1]), Point(bestFitLine[2], bestFitLine[3]), color, 1, 8);
+
 
 				imshow("Contours", drawing);
-				
-				//waitKey(0);
+			}
+			//waitKey(0);
 			//}
 
 			/////////////////////////////////////////////
-			
+
 
 
 
 			// Create a vectorwhich contains 4 integers in each element (coordinates of the line)
 			vector<Vec4i> lines;
-			
-			
+
+
 			// Set limits on line detection
+			//Good value here
+			//double minLineLength = 80;
 			double minLineLength = 80;
 			double maxLineGap = 5;
-			
+
 			HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
+
+			int numLines = lines.size();
+			double longestLine = 0;
+
+			Point highestPoint(0, 0);
+			Point lowestPoint(0, 0);
+
+			for (size_t i = 0; i < numLines; i++) {
+				//cout << lines[i] << endl;
+				int x1 = lines[i][0];
+				int y1 = lines[i][1];
+				int x2 = lines[i][2];
+				int y2 = lines[i][3];
+
+				if (y1 < y2) {
+					highestPoint.y += y1;
+					highestPoint.x += x1;
+					lowestPoint.y += y2;
+					lowestPoint.x += x2;
+				}
+				else {
+					highestPoint.y += y2;
+					highestPoint.x += x2;
+					lowestPoint.y += y1;
+					lowestPoint.x += x1;
+				}
+
+
+				Point a(x1, y1);
+				Point b(x2, y2);
+				double res = norm(a - b);
+				longestLine = res;
+				//line(frame, Point(x1, y1),
+				//Point(x2, y2), Scalar(0, 0, 255), 3, 8);
+				//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
+				//circle(frame, Point(x2, y2), 5, (0, 255, 0), -1);
+				float angle = atan2(y1 - y2, x1 - x2);
+				//cout << "angle = " << angle << endl;
+				if (x2 - x1 != 0) {
+					int slope = (y2 - y1) / (x2 - x1);
+					//cout << "Slope = " << slope << endl;
+				}
+
+				//line(frame, Point(bestFitLine[0], bestFitLine[1]),
+				//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
+				//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
+				//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
+
+			}
+
+			if (numLines > 0) {
+				highestPoint.y /= numLines;
+				highestPoint.x /= numLines;
+				lowestPoint.y /= numLines;
+				lowestPoint.x /= numLines;
+				line(frame, highestPoint,
+					lowestPoint, Scalar(0, 0, 255), 3, 8);
+
+
+				// Every 5 frames add to the average line
+				if ((processCount > processFrames) && (processCount % 5 == 0)) {
+					numAvgLines++;
+					cout << "highestPoint = (" << highestPoint.x << ", " << highestPoint.y << ")" << endl;
+					cout << "topAvg = (" << topAvg.x << ", " << topAvg.y << ")" << endl;
+					cout << "numAvgLines = " << numAvgLines << endl;
+					circle(frame, topAvg, 5, (255, 255, 255), -1);
+					topAvg.x = highestPoint.x;
+					topAvg.y = highestPoint.y;
+					botAvg.x = lowestPoint.x;
+					botAvg.y = lowestPoint.y;
+
+				}
+			}
+			
+			line(frame, topAvg,
+			botAvg, Scalar(0, 255, 0), 3, 8);
 			
 
-			double longestLine = 0;
-			//for (size_t i = 0; i < lines.size(); i++) {
-			//	//cout << lines[i] << endl;
-			//	int x1 = lines[i][0];
-			//	int y1 = lines[i][1];
-			//	int x2 = lines[i][2];
-			//	int y2 = lines[i][3];
-			//	
-			//	// If the line is parallel and above the middle of the image continue through the loop
-			//	//if (y2 < 220 && y1 < 220) {
-			//	//	continue;
-			//	//}
 
-			//	Point a(x1, y1);
-			//	Point b(x2, y2);
-			//	double res = norm(a - b);
-			//	longestLine = res;
-			//	line(frame, Point(x1, y1),
-			//	Point(x2, y2), Scalar(0, 0, 255), 3, 8);
-			//	float angle = atan2(y1 - y2, x1 - x2);
-			//	//cout << "angle = " << angle << endl;
-			//	//line(frame, Point(bestFitLine[0], bestFitLine[1]),
-			//	//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
-			//	//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
-			//	//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
-
+			// Draw borders for turn radius
+			//for (int i = 0; i < 10; i++) {
+			//	int interval = 64;
+			//	line(frame, Point(interval * i, 480), Point(interval * i, 0), Scalar(255, 0, 0), 1, 8);
 			//}
 			//imshow("canny_output", canny_output);
 			imshow("yellowOnly", yellowOnly);
