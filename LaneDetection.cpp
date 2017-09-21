@@ -1,8 +1,9 @@
 /*
 * Author: Conor J Van Achte
 * Last Edited: 09/13/2017
-*
-*
+* Title: Line Following and Detection
+* Description: This code takes in a camera input or a previously recorded video and detects yellow lines
+*              in the frame.
 */
 
 #include <opencv2/core/core.hpp>
@@ -15,7 +16,31 @@ using namespace std;
 using namespace cv;
 //Temp global
 Mat frame;
+// @@param int midX: the middle of the found lines mid
+void getTurningAngle(int midX, int angle, Point top, Point bot) {
+	// @@ int desiredAngle: set to the desired angle
+	// @@ int desiredMidXVal: ideal mid value, for example, 420 for the middle of the frame
+	int desiredAngle = 0;
+	int desiredMidXVal = 320;
+	//
+	if (midX >= 220 && midX <= 420) {
+		//Possible go straight, check the angle
+		if (angle < 20) {
+			// Good chance of going straight
+			// TODO: Send command to trike to continue course
+			cout << "Go Straight" << endl;
+		}
+	}
+	else if (midX < 220) {
+		if (top.x < bot.x) {
+			// Turn left
+			cout << "Turn left" << endl;
+		}
+	}
 
+	
+
+}
 Mat yellowFilter(const Mat& src) {
 	assert(src.type() == CV_8UC3);
 
@@ -107,7 +132,7 @@ int main(int argc, char *argv[]) {
 	//imshow("yellowOnly", yellowOnly);
 	//waitKey();
 
-	VideoCapture cap("video7.mp4");
+	VideoCapture cap("video3.mp4");
 	//VideoCapture cap(0);
 	if (!cap.isOpened()) {
 		return -1;
@@ -127,10 +152,10 @@ int main(int argc, char *argv[]) {
 	// @@ int currentY: current Y value for the frame
 	int prevY = -1;
 	int currentY = -1;
-	int xVals[] = {0, 0, 0, 0};
+	int xVals[] = { 0, 0, 0, 0 };
 
 
-	
+
 	while (cap.isOpened()) {
 		frame;
 		cap >> frame;
@@ -146,6 +171,12 @@ int main(int argc, char *argv[]) {
 			// Draws a line straight down middle of screen as a reference line
 			line(frame, Point(320, 0),
 				Point(320, 480), Scalar(0, 0, 0), 3, 8);
+			// Draws two lines in prospective straight area
+			line(frame, Point(220, 0),
+				Point(220, 480), Scalar(0, 0, 0), 3, 8);
+			line(frame, Point(420, 0),
+				Point(420, 480), Scalar(0, 0, 0), 3, 8);
+
 
 			//////////////////////////////////////////////
 			int thresh = 50;
@@ -166,7 +197,7 @@ int main(int argc, char *argv[]) {
 			//	Point(500, 400), Scalar(0, 255, 0), 1, 8);
 
 			Vec4f fitLines;
-			
+
 			/// Get the moments
 			vector<Moments> mu(contours.size());
 			for (int i = 0; i < contours.size(); i++) {
@@ -205,10 +236,7 @@ int main(int argc, char *argv[]) {
 					//}
 
 				}
-				// Iterate through each point of 
 
-
-				//cout << "Largest area = " << largestArea << endl;
 				// End of largest contour search
 				Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
 				//for (int i = 0; i < contours.size(); i++) {
@@ -341,7 +369,7 @@ int main(int argc, char *argv[]) {
 
 
 				circle(frame, topAvg, 5, (255, 255, 255), -1);
-				
+
 				if ((botTemp.x != 0) && (botTemp.y != 0)) {
 
 					line(frame, topTemp,
@@ -361,27 +389,27 @@ int main(int argc, char *argv[]) {
 					// Draws the shifted line onto the middle of the image
 					line(frame, botTrans,
 						topTrans, Scalar(255, 255, 0), 3, 8);
-					
+
 					// Draws the line from the middle point of the average line found
 					// and draws from its middle point to the center of the image
 					line(frame, Point(midX, midY),
 						Point(320, midY), Scalar(255, 255, 0), 3, 8);
-					
+
 					int diff = 320 - midX;
 					cout << "diff = " << diff << endl;
-
+					cout << "midX = " << midX << endl;
 					// Draws line from top of transposed line to the middle of image
 					line(frame, topTrans,
-						Point(320,topTrans.y), Scalar(255, 255, 0), 3, 8);
+						Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
 
 
 					//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
 					float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
-					cout << "angle2 = " << angle2 * 180 / CV_PI<< endl;
+					cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
 					float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
 					//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 					circle(frame, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
-					cout << "angle = " << angle  << endl;
+					cout << "angle = " << angle << endl;
 					double opposite = getLength(topTrans, Point(320, topTrans.y));
 					cout << "opposite = " << opposite << endl;
 					double hypotenuse = getLength(topTrans, Point(320, midY));
@@ -390,12 +418,15 @@ int main(int argc, char *argv[]) {
 					cout << "O/H = " << opposite / hypotenuse << endl;
 					double testAngle = asin(opposite / hypotenuse) * 180 / CV_PI;
 					cout << "testAngle = " << testAngle << endl;
+
+					
+					getTurningAngle(midX, testAngle, topTemp, botTemp);
 					waitKey(0);
 				}
 			}
-			
 
-			
+
+
 
 			//imshow("canny_output", canny_output);
 			imshow("yellowOnly", yellowOnly);
