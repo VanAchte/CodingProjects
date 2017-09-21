@@ -16,29 +16,65 @@ using namespace std;
 using namespace cv;
 //Temp global
 Mat frame;
+
 // @@param int midX: the middle of the found lines mid
 void getTurningAngle(int midX, int angle, Point top, Point bot) {
 	// @@ int desiredAngle: set to the desired angle
-	// @@ int desiredMidXVal: ideal mid value, for example, 420 for the middle of the frame
+	// @@ int desiredMidXVal: ideal mid value, for example, 320 for the middle of the frame
 	int desiredAngle = 0;
 	int desiredMidXVal = 320;
-	//
+	
+	// Check if the line is in the go straight boundaries
 	if (midX >= 220 && midX <= 420) {
 		//Possible go straight, check the angle
-		if (angle < 20) {
+		if (angle <= 20) {
 			// Good chance of going straight
 			// TODO: Send command to trike to continue course
 			cout << "Go Straight" << endl;
 		}
+		// If the angle is in the center constraints and is between 20 and 30 we assume the
+		// turn will be a slight adjustment. Turn slightly towards the middle of the line detected
+		else if (angle > 20 && angle <= 30) {
+			// If the line is facing towards the middle of the image, example: \ 
+			if ((top.x < bot.x) && midX > 320) {
+				cout << "Slight right turn" << endl;
+			}
+			
+			else if ((top.x < bot.x) && midX < 320) {
+
+				cout << "Slight left turn" << endl;
+			}
+		}
+		// If the angle is greater than 30 then a moderate turn is needed
+		else if (angle > 30) {
+			// Moderate turn left if the angle
+			if (top.x < bot.x) {
+				cout << "Moderate turn left" << endl;
+			}
+			else {
+				cout << "Moderate turn right" << endl;
+			}
+		}
 	}
+	// If line is found on the left side of the screen
 	else if (midX < 220) {
+		// If the line is facing to the left side of the screen, example: \ 
 		if (top.x < bot.x) {
 			// Turn left
 			cout << "Turn left" << endl;
 		}
+		else {
+			// Line is facing towards the middle of the screen, example: / 
+			// Possibley turn right in this case
+
+		}
+	}
+	else if (midX > 420) {
+		// If the line is in the right side of the image we are probable going to turn right
+		cout << "Turn right" << endl;
 	}
 
-	
+
 
 }
 Mat yellowFilter(const Mat& src) {
@@ -51,8 +87,6 @@ Mat yellowFilter(const Mat& src) {
 	cvtColor(src_blur, src_hls, CV_BGR2HLS);
 	rectangle(src_hls, Point(0, 0),
 		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
-	//imshow("src_hls with black rect", src_hls);
-	//waitKey(0);
 
 	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
 	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
@@ -60,42 +94,11 @@ Mat yellowFilter(const Mat& src) {
 	return yellowOnly;
 }
 
-vector<Point> initFitLine(const vector<vector<Point>>& points, int index) {
-	//cout << "Start of initFitLine" << endl;
-	//waitKey(200);
-	int size = points[index].size();
-	vector<Point> bestFit;
-	if (size > 0) {
-		for (size_t i = 0; i < size; i++) {
-			//cout << "points[index][" << i << "] = " << points[index][i] << endl;
-			bestFit.push_back(points[index][i]);
-			circle(frame, Point(points[index][i]), 5, (255, 0, 0), -1);
-		}
-	}
-	//waitKey(0);
-	//cout << "index = " << index << endl;
 
-	return bestFit;
-}
 int getShiftAmount(int x) {
 	// We want to shift the x into the middle to figure out the angle that would be made between these two lines
 	int shiftTarget = 320;
 	return shiftTarget - x;
-}
-float angleBetween(const Point &v1, const Point &v2) {
-	float len1 = sqrt(v1.x * v1.x + v1.y * v1.y);
-	float len2 = sqrt(v2.x * v2.x + v2.y * v2.y);
-
-	float dot = v1.x * v2.x + v1.y * v2.y;
-
-	float a = dot / (len1 * len2);
-
-	if (a >= 1.0)
-		return 0.0;
-	else if (a <= -1.0)
-		return CV_PI; //PI
-	else
-		return acos(a); // 0..PI
 }
 
 double getLength(Point p1, Point p2) {
@@ -111,6 +114,9 @@ int main(int argc, char *argv[]) {
 		cout << "Error loading the image" << endl;
 		exit(1);
 	}
+
+	// This commented out section is for use on a still image
+
 	//Mat input_blur;
 	//imshow("input", input);
 	//waitKey();
@@ -132,7 +138,7 @@ int main(int argc, char *argv[]) {
 	//imshow("yellowOnly", yellowOnly);
 	//waitKey();
 
-	VideoCapture cap("video3.mp4");
+	VideoCapture cap("video9.mp4");
 	//VideoCapture cap(0);
 	if (!cap.isOpened()) {
 		return -1;
@@ -183,93 +189,86 @@ int main(int argc, char *argv[]) {
 			Mat input_blur;
 			GaussianBlur(input, input_blur, Size(25, 25), 0, 0);
 			Mat canny_output;
-			vector<vector<Point>> contours;
-			vector<Vec4i> hierarchy;
+			//vector<vector<Point>> contours;
+			//vector<Vec4i> hierarchy;
 
 
 			/// Detect edges using canny
 			Canny(yellowOnly, canny_output, thresh, thresh * 2, 3);
 			/// Find contours
-			findContours(yellowOnly, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
+			//findContours(yellowOnly, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0));
 
-			imshow("canny_output", canny_output);
 			//rectangle(frame, Point(130, 350),
 			//	Point(500, 400), Scalar(0, 255, 0), 1, 8);
 
-			Vec4f fitLines;
+			//Vec4f fitLines;
 
 			/// Get the moments
-			vector<Moments> mu(contours.size());
-			for (int i = 0; i < contours.size(); i++) {
-				mu[i] = moments(contours[i], false);
-			}
+			//vector<Moments> mu(contours.size());
+			//for (int i = 0; i < contours.size(); i++) {
+			//	mu[i] = moments(contours[i], false);
+			//}
 
-			///  Get the mass centers:
-			vector<Point2f> mc(contours.size());
-			for (int i = 0; i < contours.size(); i++) {
-				mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
-			}
+			/////  Get the mass centers:
+			//vector<Point2f> mc(contours.size());
+			//for (int i = 0; i < contours.size(); i++) {
+			//	mc[i] = Point2f(mu[i].m10 / mu[i].m00, mu[i].m01 / mu[i].m00);
+			//}
 			/// Draw contours
 
 			// Find the largest contour
-			int largestArea = 0;
-			int largestContourIndex = 0;
+			//int largestArea = 0;
+			//int largestContourIndex = 0;
 
-			Rect boundingRectangle;
-			// Iterate through all the contours
-			int contourSize = contours.size();
-			if (contourSize > 0) {
-				for (int i = 0; i < contourSize; i++) {
-					// Find the contour with the greatest area
-					double area = contourArea(contours[i], false);
-					if (area > largestArea) {
-						largestArea = area;
-						largestContourIndex = i;
-						boundingRectangle = boundingRect(contours[i]);
-					}
-
-					//cout << "contours[" << i << "] = " << contours[i] << endl;
-					//waitKey(0);
-					// Find the left most point
-					//if (contours[i].x > leftMostPoint) {
-					//	leftMostPoint = contours[i].x;
-					//}
-
-				}
-
-				// End of largest contour search
-				Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
-				//for (int i = 0; i < contours.size(); i++) {
-				Scalar color = Scalar(0, 0, 255);
-				Scalar color2 = Scalar(127, 0, 255);
-				Scalar color3 = Scalar(255, 0, 0);
-				//cout << "contours[" << i << "] = " << contours[i][0] << endl;
+			//Rect boundingRectangle;
+			//// Iterate through all the contours
+			//int contourSize = contours.size();
+			//if (contourSize > 0) {
+			//	for (int i = 0; i < contourSize; i++) {
+			//		// Find the contour with the greatest area
+			//		double area = contourArea(contours[i], false);
+			//		if (area > largestArea) {
+			//			largestArea = area;
+			//			largestContourIndex = i;
+			//			boundingRectangle = boundingRect(contours[i]);
+			//		}
 
 
-				drawContours(drawing, contours, largestContourIndex, color, 1, 8, hierarchy, 0, Point());
-				circle(drawing, mc[largestContourIndex], 4, color, -1, 8, 0);
+			//	}
 
-				//circle(drawing, mc[i], 4, color2, -1, 8, 0);
-				//Vec4f bestFitLine;
-
-
-				vector<Point> bestFitPoints = initFitLine(contours, largestContourIndex);
-				int averageX = 0;
-				int averageY = 0;
-				int numPoints = bestFitPoints.size();
-				for (int k = 0; k < numPoints; k++) {
-					averageX += bestFitPoints[k].x;
-					averageY += bestFitPoints[k].y;
-				}
-				averageX /= numPoints;
-				averageY /= numPoints;
-				circle(frame, Point(averageX, averageY), 4, color3, -1, 8, 0);
-				//fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
-				//line(drawing, Point(bestFitLine[0], bestFitLine[1]), Point(bestFitLine[2], bestFitLine[3]), color, 1, 8);
+			//	// End of largest contour search
+			//	Mat drawing = Mat::zeros(canny_output.size(), CV_8UC3);
+			//	//for (int i = 0; i < contours.size(); i++) {
+			//	Scalar color = Scalar(0, 0, 255);
+			//	Scalar color2 = Scalar(127, 0, 255);
+			//	Scalar color3 = Scalar(255, 0, 0);
+			//	//cout << "contours[" << i << "] = " << contours[i][0] << endl;
 
 
-				//imshow("Contours", drawing);
-			}
+			//	drawContours(drawing, contours, largestContourIndex, color, 1, 8, hierarchy, 0, Point());
+			//	circle(drawing, mc[largestContourIndex], 4, color, -1, 8, 0);
+
+			//	//circle(drawing, mc[i], 4, color2, -1, 8, 0);
+			//	//Vec4f bestFitLine;
+
+
+			//	vector<Point> bestFitPoints = initFitLine(contours, largestContourIndex);
+			//	int averageX = 0;
+			//	int averageY = 0;
+			//	int numPoints = bestFitPoints.size();
+			//	for (int k = 0; k < numPoints; k++) {
+			//		averageX += bestFitPoints[k].x;
+			//		averageY += bestFitPoints[k].y;
+			//	}
+			//	averageX /= numPoints;
+			//	averageY /= numPoints;
+			//	circle(frame, Point(averageX, averageY), 4, color3, -1, 8, 0);
+			//	//fitLine(bestFitPoints, bestFitLine, CV_DIST_L2, 0, 0.01, 0.01);
+			//	//line(drawing, Point(bestFitLine[0], bestFitLine[1]), Point(bestFitLine[2], bestFitLine[3]), color, 1, 8);
+
+
+			//	//imshow("Contours", drawing);
+			//}
 			//waitKey(0);
 			//}
 
@@ -404,12 +403,12 @@ int main(int argc, char *argv[]) {
 
 
 					//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
-					float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
-					cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
-					float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
+					//float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
+					//cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
+					//float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
 					//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 					circle(frame, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
-					cout << "angle = " << angle << endl;
+					//cout << "angle = " << angle << endl;
 					double opposite = getLength(topTrans, Point(320, topTrans.y));
 					cout << "opposite = " << opposite << endl;
 					double hypotenuse = getLength(topTrans, Point(320, midY));
@@ -419,7 +418,7 @@ int main(int argc, char *argv[]) {
 					double testAngle = asin(opposite / hypotenuse) * 180 / CV_PI;
 					cout << "testAngle = " << testAngle << endl;
 
-					
+
 					getTurningAngle(midX, testAngle, topTemp, botTemp);
 					waitKey(0);
 				}
@@ -429,7 +428,7 @@ int main(int argc, char *argv[]) {
 
 
 			//imshow("canny_output", canny_output);
-			imshow("yellowOnly", yellowOnly);
+			//imshow("yellowOnly", yellowOnly);
 			imshow("frame", frame);
 			if (waitKey(1) == 27) {
 				break;
