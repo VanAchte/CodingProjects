@@ -15,8 +15,11 @@
 using namespace std;
 using namespace cv;
 //Temp global
-Mat frame;
 
+Mat frame;
+#define DEG_PER_PIXEL 0.036
+
+// Method is a work in progres, may end up being scrapped
 // @@param int midX: the middle of the found lines mid
 void getTurningAngle(int midX, int angle, Point top, Point bot) {
 	// @@ int desiredAngle: set to the desired angle
@@ -138,7 +141,7 @@ int main(int argc, char *argv[]) {
 	//imshow("yellowOnly", yellowOnly);
 	//waitKey();
 
-	VideoCapture cap("video9.mp4");
+	VideoCapture cap("video3.mp4");
 	//VideoCapture cap(0);
 	if (!cap.isOpened()) {
 		return -1;
@@ -418,7 +421,8 @@ int main(int argc, char *argv[]) {
 					double testAngle = asin(opposite / hypotenuse) * 180 / CV_PI;
 					cout << "testAngle = " << testAngle << endl;
 
-
+					double degrees = DEG_PER_PIXEL * (midX - 320);
+					cout << "degrees = " << degrees << endl;
 					getTurningAngle(midX, testAngle, topTemp, botTemp);
 					waitKey(0);
 				}
