@@ -24,108 +24,22 @@ int cport_nr = 24; /* /dev/ttyACM0 */
 
 
 void detectLines(Mat& imgOriginal, int processCount);
+double getLength(Point p1, Point p2);
+int getShiftAmount(int x);
+Mat yellowFilter(const Mat& src);
+void getTurningAngle(int midX, int angle, Point top, Point bot);
 void sendToArduino(float dist, float deg);
 void receiveFromArduino();
 
 
-// Method is a work in progres, may end up being scrapped
-// @@param int midX: the middle of the found lines mid
-void getTurningAngle(int midX, int angle, Point top, Point bot) {
-	// @@ int desiredAngle: set to the desired angle
-	// @@ int desiredMidXVal: ideal mid value, for example, 320 for the middle of the frame
-	int desiredAngle = 0;
-	int desiredMidXVal = 320;
-
-	// Check if the line is in the go straight boundaries
-	if (midX >= 220 && midX <= 420) {
-		//Possible go straight, check the angle
-		if (angle <= 20) {
-			// Good chance of going straight
-			// TODO: Send command to trike to continue course
-			cout << "Go Straight" << endl;
-		}
-		// If the angle is in the center constraints and is between 20 and 30 we assume the
-		// turn will be a slight adjustment. Turn slightly towards the middle of the line detected
-		else if (angle > 20 && angle <= 30) {
-			// If the line is facing towards the middle of the image, example: \ 
-			if ((top.x < bot.x) && midX > 320) {
-				cout << "Slight right turn" << endl;
-			}
-
-			else if ((top.x < bot.x) && midX < 320) {
-
-				cout << "Slight left turn" << endl;
-			}
-		}
-		// If the angle is greater than 30 then a moderate turn is needed
-		else if (angle > 30) {
-			// Moderate turn left if the angle
-			if (top.x < bot.x) {
-				cout << "Moderate turn left" << endl;
-			}
-			else {
-				cout << "Moderate turn right" << endl;
-			}
-		}
-	}
-	// If line is found on the left side of the screen
-	else if (midX < 220) {
-		// If the line is facing to the left side of the screen, example: \ 
-		if (top.x < bot.x) {
-			// Turn left
-			cout << "Turn left" << endl;
-		}
-		else {
-			// Line is facing towards the middle of the screen, example: / 
-			// Possibley turn right in this case
-
-		}
-	}
-	else if (midX > 420) {
-		// If the line is in the right side of the image we are probable going to turn right
-		cout << "Turn right" << endl;
-	}
 
 
-
-}
-Mat yellowFilter(const Mat& src) {
-	assert(src.type() == CV_8UC3);
-
-	Mat yellowOnly;
-	Mat src_blur, src_hls;
-
-	GaussianBlur(src, src_blur, Size(25, 25), 0, 0);
-	cvtColor(src_blur, src_hls, CV_BGR2HLS);
-	rectangle(src_hls, Point(0, 0),
-		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
-
-	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
-	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
-	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
-	return yellowOnly;
-}
-
-
-int getShiftAmount(int x) {
-	// We want to shift the x into the middle to figure out the angle that would be made between these two lines
-	int shiftTarget = 320;
-	return shiftTarget - x;
-}
-
-double getLength(Point p1, Point p2) {
-	int xVal = pow(p2.x - p1.x, 2);
-	int yVal = pow(p2.y - p1.y, 2);
-	int distance = sqrt(xVal + yVal);
-	return distance;
-}
 int main(int argc, char* argv[]) {
 	int bdrate = 57600; /* 9600 baud */
 
 	char mode[] = { '8','N','1',0 }; // 8 data bits, no parity, 1 stop bit
 
-	if (RS232_OpenComport(cport_nr, bdrate, mode))
-	{
+	if (RS232_OpenComport(cport_nr, bdrate, mode)) {
 		cout << "Can not open comport\n";
 		return 0;
 	}
@@ -154,24 +68,11 @@ void detectLines(Mat& input, int processCount) {
 		exit(1);
 	}
 
-
-
 	int numAvgLines = 0;
 	Point topAvg(0, 0);
 	Point botAvg(0, 0);
 	Point topTemp(0, 0);
 	Point botTemp(0, 0);
-
-	// For triangle calibration to help eliminate issues with jumping line
-	// @@ int prevY: Y value for previous frame from triangle
-	// @@ int currentY: current Y value for the frame
-	int prevY = -1;
-	int currentY = -1;
-	int xVals[] = { 0, 0, 0, 0 };
-
-
-
-
 
 
 	// Masks image for yellow color
@@ -199,8 +100,7 @@ void detectLines(Mat& input, int processCount) {
 	/// Detect edges using canny
 	Canny(yellowOnly, canny_output, thresh, thresh * 2, 3);
 
-
-	// Create a vectorwhich contains 4 integers in each element (coordinates of the line)
+	// Create a vector which contains 4 integers in each element (coordinates of the line)
 	vector<Vec4i> lines;
 
 	//float testAngle = atan2(-1 - -1, 2 - 10);
@@ -317,13 +217,9 @@ void detectLines(Mat& input, int processCount) {
 			line(input, Point(midX, midY),
 				Point(320, midY), Scalar(255, 255, 0), 3, 8);
 
-			int diff = 320 - midX;
-			cout << "diff = " << diff << endl;
-			cout << "midX = " << midX << endl;
 			// Draws line from top of transposed line to the middle of image
 			line(input, topTrans,
 				Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
-
 
 			//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
 			//float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
@@ -331,33 +227,108 @@ void detectLines(Mat& input, int processCount) {
 			//float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
 			//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 			circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
-			//cout << "angle = " << angle << endl;
-			double opposite = getLength(topTrans, Point(320, topTrans.y));
-			cout << "opposite = " << opposite << endl;
-			double hypotenuse = getLength(topTrans, Point(320, midY));
-			circle(input, Point(320, midY), 5, (255, 255, 127), -1);
-			cout << "hypotenuse = " << hypotenuse << endl;
-			cout << "O/H = " << opposite / hypotenuse << endl;
-			double testAngle = asin(opposite / hypotenuse) * 180 / CV_PI;
-			cout << "testAngle = " << testAngle << endl;
 
 			double degrees = DEG_PER_PIXEL * (midX - 320);
 			cout << "degrees = " << degrees << endl;
-			getTurningAngle(midX, testAngle, topTemp, botTemp);
+			//getTurningAngle(midX, testAngle, topTemp, botTemp);
 			waitKey(0);
 		}
 	}
-
-
 
 
 	//imshow("canny_output", canny_output);
 	//imshow("yellowOnly", yellowOnly);
 	imshow("input", input);
 
+}
 
+// Method is a work in progres, may end up being scrapped
+// @@param int midX: the middle of the found lines mid
+void getTurningAngle(int midX, int angle, Point top, Point bot) {
+	// @@ int desiredAngle: set to the desired angle
+	// @@ int desiredMidXVal: ideal mid value, for example, 320 for the middle of the frame
+	int desiredAngle = 0;
+	int desiredMidXVal = 320;
 
+	// Check if the line is in the go straight boundaries
+	if (midX >= 220 && midX <= 420) {
+		//Possible go straight, check the angle
+		if (angle <= 20) {
+			// Good chance of going straight
+			// TODO: Send command to trike to continue course
+			cout << "Go Straight" << endl;
+		}
+		// If the angle is in the center constraints and is between 20 and 30 we assume the
+		// turn will be a slight adjustment. Turn slightly towards the middle of the line detected
+		else if (angle > 20 && angle <= 30) {
+			// If the line is facing towards the middle of the image, example: \ 
+			if ((top.x < bot.x) && midX > 320) {
+				cout << "Slight right turn" << endl;
+			}
 
+			else if ((top.x < bot.x) && midX < 320) {
+
+				cout << "Slight left turn" << endl;
+			}
+		}
+		// If the angle is greater than 30 then a moderate turn is needed
+		else if (angle > 30) {
+			// Moderate turn left if the angle
+			if (top.x < bot.x) {
+				cout << "Moderate turn left" << endl;
+			}
+			else {
+				cout << "Moderate turn right" << endl;
+			}
+		}
+	}
+	// If line is found on the left side of the screen
+	else if (midX < 220) {
+		// If the line is facing to the left side of the screen, example: \ 
+		if (top.x < bot.x) {
+			// Turn left
+			cout << "Turn left" << endl;
+		}
+		else {
+			// Line is facing towards the middle of the screen, example: / 
+			// Possibley turn right in this case
+
+		}
+	}
+	else if (midX > 420) {
+		// If the line is in the right side of the image we are probable going to turn right
+		cout << "Turn right" << endl;
+	}
+
+}
+Mat yellowFilter(const Mat& src) {
+	assert(src.type() == CV_8UC3);
+
+	Mat yellowOnly;
+	Mat src_blur, src_hls;
+
+	GaussianBlur(src, src_blur, Size(25, 25), 0, 0);
+	cvtColor(src_blur, src_hls, CV_BGR2HLS);
+	rectangle(src_hls, Point(0, 0),
+		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
+
+	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
+	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
+	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
+	return yellowOnly;
+}
+
+int getShiftAmount(int x) {
+	// We want to shift the x into the middle to figure out the angle that would be made between these two lines
+	int shiftTarget = 320;
+	return shiftTarget - x;
+}
+
+double getLength(Point p1, Point p2) {
+	int xVal = pow(p2.x - p1.x, 2);
+	int yVal = pow(p2.y - p1.y, 2);
+	int distance = sqrt(xVal + yVal);
+	return distance;
 }
 
 void sendToArduino(float dist, float deg) {
