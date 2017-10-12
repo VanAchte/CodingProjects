@@ -6,9 +6,9 @@
 #include <cstdlib>
 #include <thread>
 #include <chrono>
-extern "C" {
-#include "rs232.h"
-}
+//extern "C" {
+//#include "rs232.h"
+//}
 
 
 #define DEG_PER_PIXEL		0.036
@@ -28,8 +28,8 @@ double getLength(Point p1, Point p2);
 int getShiftAmount(int x);
 Mat yellowFilter(const Mat& src);
 void getTurningAngle(int midX, int angle, Point top, Point bot);
-void sendToArduino(float dist, float deg);
-void receiveFromArduino();
+//void sendToArduino(float dist, float deg);
+//void receiveFromArduino();
 
 
 
@@ -39,12 +39,12 @@ int main(int argc, char* argv[]) {
 
 	char mode[] = { '8','N','1',0 }; // 8 data bits, no parity, 1 stop bit
 
-	if (RS232_OpenComport(cport_nr, bdrate, mode)) {
-		cout << "Can not open comport\n";
-		return 0;
-	}
+	//if (RS232_OpenComport(cport_nr, bdrate, mode)) {
+	//	cout << "Can not open comport\n";
+	//	return 0;
+	//}
 
-	usleep(2000000);  /* waits 2000ms for stable condition */
+	//usleep(2000000);  /* waits 2000ms for stable condition */
 
 	VideoCapture capture(0);
 	Mat frame;
@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
 
 
 void detectLines(Mat& input, int processCount) {
+	cout << processCount << endl;
 	if (input.empty()) {
 		cout << "Error loading the image" << endl;
 		exit(1);
@@ -167,6 +168,7 @@ void detectLines(Mat& input, int processCount) {
 		highestPoint.x /= numLines;
 		lowestPoint.y /= numLines;
 		lowestPoint.x /= numLines;
+		circle(input, highestPoint, 5, (0, 0, 0), -1);
 		line(input, highestPoint,
 			lowestPoint, Scalar(0, 0, 255), 3, 8);
 		topAvg.x += highestPoint.x;
@@ -176,26 +178,25 @@ void detectLines(Mat& input, int processCount) {
 		// Every 5 frames add to the average line
 		if (processCount % 5 == 0) {
 			numAvgLines++;
-			topAvg.x /= 5;
-			topAvg.y /= 5;
-			botAvg.x /= 5;
-			botAvg.y /= 5;
+			//topAvg.x /= 5;
+			//topAvg.y /= 5;
+			//botAvg.x /= 5;
+			//botAvg.y /= 5;
 			topTemp = topAvg;
 			botTemp = botAvg;
 			topAvg.x = 0;
 			topAvg.y = 0;
 			botAvg.x = 0;
 			botAvg.y = 0;
-
 		}
 
-
 		circle(input, topAvg, 5, (255, 255, 255), -1);
-
+		line(input, topTemp,
+			botTemp, Scalar(0, 255, 0), 3, 8);
 		if ((botTemp.x != 0) && (botTemp.y != 0)) {
-
-			line(input, topTemp,
-				botTemp, Scalar(0, 255, 0), 3, 8);
+			cout << "botTemp = " << botTemp << "topTemp = " << topTemp << endl;
+			//line(input, topTemp,
+				//botTemp, Scalar(0, 255, 0), 3, 8);
 			int midX = (botTemp.x + topTemp.x) / 2;
 			int midY = (botTemp.y + topTemp.y) / 2;
 			circle(input, Point(midX, midY), 5, (0, 0, 0), -1);
@@ -220,7 +221,7 @@ void detectLines(Mat& input, int processCount) {
 			// Draws line from top of transposed line to the middle of image
 			line(input, topTrans,
 				Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
-
+			
 			//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
 			//float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
 			//cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
@@ -228,10 +229,11 @@ void detectLines(Mat& input, int processCount) {
 			//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 			circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
 
-			double degrees = DEG_PER_PIXEL * (midX - 320);
+			float degrees = DEG_PER_PIXEL * (midX - 320);
 			cout << "degrees = " << degrees << endl;
+			//sendToArduino(degrees, 0);
 			//getTurningAngle(midX, testAngle, topTemp, botTemp);
-			waitKey(0);
+			//waitKey(0);
 		}
 	}
 
@@ -331,20 +333,20 @@ double getLength(Point p1, Point p2) {
 	return distance;
 }
 
-void sendToArduino(float dist, float deg) {
-	int i_deg = (int)deg + 10;
-	if (i_deg < 0) i_deg = 0;
-	string send_str = to_string((int)dist) + "," + to_string(i_deg) + "\n";
-	RS232_cputs(cport_nr, send_str.c_str());
-	cout << "Sent to Arduino: " << send_str;
-	usleep(8000);
-}
-
-void receiveFromArduino() {
-	unsigned char str_recv[BUF_SIZE]; // recv data buffer
-	int n = RS232_PollComport(cport_nr, str_recv, (int)BUF_SIZE);
-	if (n > 0) {
-		str_recv[n] = 0;   // put null at end
-		cout << "Received " << n << " bytes: " << (char *)str_recv << "\n";
-	}
-}
+//void sendToArduino(float dist, float deg) {
+//	int i_deg = (int)deg + 10;
+//	if (i_deg < 0) i_deg = 0;
+//	string send_str = to_string((int)dist) + "," + to_string(i_deg) + "\n";
+//	RS232_cputs(cport_nr, send_str.c_str());
+//	cout << "Sent to Arduino: " << send_str;
+//	usleep(8000);
+//}
+//
+//void receiveFromArduino() {
+//	unsigned char str_recv[BUF_SIZE]; // recv data buffer
+//	int n = RS232_PollComport(cport_nr, str_recv, (int)BUF_SIZE);
+//	if (n > 0) {
+//		str_recv[n] = 0;   // put null at end
+//		cout << "Received " << n << " bytes: " << (char *)str_recv << "\n";
+//	}
+//}
