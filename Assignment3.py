@@ -1,15 +1,13 @@
 lines = []
-
+baseCookies = []
+newCookies = []
 baseCookieToSegment = {}
 baseSegmentToCookie = {}
 newCookieToSegment = {}
 newSegmentToCookie = {}
 end = None
 
-file1 = 'evaluator-integration-baseline.log'
-file2 = 'evaluator-integration.log'
 
-itNum = 0
 
 
 #def setDicts(file1, itNum):
@@ -31,7 +29,10 @@ def setDicts(fileName, iterNum):
             splitLine = line.split("evaluated:", 1)[1]
             # get the cookie and get rid of the spaces in front and back
             cookie = splitLine.split("==>", 1)[0][1:-1]
-            # cookie = cookie[1:-1]
+            if (iterNum == 0):
+                baseCookies.append(cookie)
+            else:
+                newCookies.append(cookie)
             segments = splitLine.split("==>", 1)[1]
             # print(splitLine)
             print(cookie, segments)
@@ -65,7 +66,17 @@ def sliceSegs(allSegs):
         allSegs[0] = allSegs[0][1:end]
     return allSegs
 
+def setSegsToCookies(segs, cookie, itNum):
 
+    return
+
+
+file1 = 'evaluator-integration-baseline.log'
+file2 = 'evaluator-integration.log'
+
+itNum = 0
+
+# main method
 setDicts(file1,itNum)
 itNum += 1
 setDicts(file2,itNum)
