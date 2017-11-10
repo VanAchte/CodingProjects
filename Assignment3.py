@@ -21,7 +21,9 @@ def setDicts(fileName, iterNum):
     with open(fileName) as file:
         count = 0
         for line in file:
-            line = line.strip()  # or some other preprocessing
+            count += 1
+            print("count =",count)
+            line = line.strip()
 
             # Check if our string is in the line
             if "evaluated: " not in line:
@@ -35,15 +37,16 @@ def setDicts(fileName, iterNum):
                 newCookies.append(cookie)
             segments = splitLine.split("==>", 1)[1]
             # print(splitLine)
-            print(cookie, segments)
+            #print(cookie, segments)
             # Perform slicing on strings using ',' as a delimiter to be split from
             allSegs = sliceSegs(segments.split(","))
             if (iterNum == 0):
                 baseCookieToSegment[cookie] = allSegs
+                mapSegs(allSegs, cookie, iterNum)
             else:
                 newCookieToSegment[cookie] = allSegs
 
-            print("allSegs=", allSegs)
+            #print("allSegs=", allSegs)
 
             # lines.append(line) #storing everything in memory!
     return
@@ -66,7 +69,15 @@ def sliceSegs(allSegs):
         allSegs[0] = allSegs[0][1:end]
     return allSegs
 
-def setSegsToCookies(segs, cookie, itNum):
+def mapSegs(segList, cookie, itNum):
+    for seg in segList:
+        key = seg
+        if (itNum == 0):
+            baseSegmentToCookie.setdefault(key,[])
+            baseSegmentToCookie[key].append(cookie)
+        else:
+            newSegmentToCookie.setdefault(key,[])
+            newSegmentToCookie[key].append(cookie)
 
     return
 
@@ -77,6 +88,9 @@ file2 = 'evaluator-integration.log'
 itNum = 0
 
 # main method
+print("start")
 setDicts(file1,itNum)
+print("done with file1")
 itNum += 1
 setDicts(file2,itNum)
+print("done")
