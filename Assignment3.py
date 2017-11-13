@@ -78,7 +78,6 @@ def mapSegs(segList, cookie, itNum):
         else:
             newSegmentToCookie.setdefault(key,[])
             newSegmentToCookie[key].append(cookie)
-
     return
 
 
