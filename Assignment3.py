@@ -8,21 +8,12 @@ newSegmentToCookie = {}
 end = None
 
 
-
-
-#def setDicts(file1, itNum):
-#    pass
-
-
-
-#'evaluator-integration-baseline.log'
-
 def setDicts(fileName, iterNum):
     with open(fileName) as file:
         count = 0
         for line in file:
             count += 1
-            print("count =",count)
+            #print("count =",count)
             line = line.strip()
 
             # Check if our string is in the line
@@ -45,6 +36,7 @@ def setDicts(fileName, iterNum):
                 mapSegs(allSegs, cookie, iterNum)
             else:
                 newCookieToSegment[cookie] = allSegs
+                mapSegs(allSegs, cookie, iterNum)
 
             #print("allSegs=", allSegs)
 
@@ -80,9 +72,13 @@ def mapSegs(segList, cookie, itNum):
             newSegmentToCookie[key].append(cookie)
     return
 
+#evaluator-integration.log
+#evaluator-integration-baseline.log
 
-file1 = 'evaluator-integration-baseline.log'
-file2 = 'evaluator-integration.log'
+#file1 = 'evaluator-integration-baseline.log'
+#ile2 = 'evaluator-integration.log'
+file1 = 'baselineSmall.log'
+file2 = 'postFile.log'
 
 itNum = 0
 
@@ -90,6 +86,51 @@ itNum = 0
 print("start")
 setDicts(file1,itNum)
 print("done with file1")
-itNum += 1
+itNum = 1
 setDicts(file2,itNum)
 print("done")
+
+counter = 0
+missCookies = 0
+addedCookies = 0
+
+for key in baseSegmentToCookie.iterkeys():
+   print "key1=",key
+   counter += 1
+
+   if key in newSegmentToCookie:
+       if baseSegmentToCookie.get(key) == newSegmentToCookie.get(key):
+           continue
+
+       #values = baseSegmentToCookie.get(key)
+       #values2 = newSegmentToCookie.get(key)
+#       print "baseValues=",values
+ #      print "newValuess=",values2
+       for val in baseSegmentToCookie.get(key):
+           print "val",val
+           if val not in newSegmentToCookie.get(key):
+               missCookies += 1
+               print ("missingCookies=", missCookies)
+
+       for cookie in newSegmentToCookie.get(key):
+            if cookie not in baseSegmentToCookie.get(key):
+        	    print "cookie=", cookie
+        	    addedCookies += 1
+
+               #print "val",val
+
+       #print "values=",values
+counter2 = 0
+
+
+for key in sorted(baseCookieToSegment.iterkeys()):
+    counter2 += 1
+
+print ("missCookies =",missCookies,"/",counter)
+print ("number of segments =", counter)
+print ("number of cookies =", counter2)
+print("addedCookies=", addedCookies)
+print "done again, for real this time"
+#for key in sorted(newSegmentToCookie.iterkeys()):
+ #  print "key2=",key
+
