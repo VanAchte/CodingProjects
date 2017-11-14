@@ -102,8 +102,13 @@ print("done with file2")
 numSegs = 0
 missCookies = 0
 addedCookies = 0
+printList1 = []
+printList2 = []
+lineNum = 0
 
-for key in baseSegmentToCookie.iterkeys():
+
+f= open("test.txt","w+")
+for key in sorted(baseSegmentToCookie.iterkeys()):
     #print "key1=",key
     if key == "[]":
         continue
@@ -117,6 +122,13 @@ for key in baseSegmentToCookie.iterkeys():
         newSet = set(newSegmentToCookie.get(key))
         diff = newSet.difference(baseSet)
         if len(diff) > 0:
+            #print("len=",len(diff))
+            #print "diff=", diff
+            printList1.append(key)
+            printList1.append(len(diff))
+            printList1.append(diff)
+
+
             addedCookies += 1
         #print "baseSet=",baseSet
         #print "newSet=",newSet
@@ -125,15 +137,38 @@ for key in baseSegmentToCookie.iterkeys():
             missCookies += 1
     else:
         missCookies += 1
-
-
+start = "Segments with added cookies: " + str(addedCookies) + " / " + str(numSegs)
+f.write(start + '\n')
+#test.write ("Segments with added cookies:",addedCookies,"/", numSegs,)
+#"Segments with added cookies:",addedCookies,"/", numSegs,
+s = ""
+for index, element in enumerate(printList1):
+    #print "lastElem=", printList1[len(printList1) - 3];
+    if (index % 3 == 0 and index > 0) or index == len(printList1) - 1:
+        if(index == len(printList1) - 1):
+            f.write(str(lineNum) + s + "\t" + str(list(printList1[len(printList1) - 1])) + '\n')
+            s = ""
+            lineNum += 1
+        else:
+            f.write(str(lineNum) + s + '\n')
+            s = ""
+            lineNum += 1
+    if isinstance(element, set):
+        #print "\t", list(element),
+        s += "\t" + str(sorted(list(element)))
+    else:
+        s += "\t" + str(element)
+    
+        #print "\t", element,
+f.write("")
+#print ""
 numCookies = 0
 missSegs = 0
 addedSegs = 0
-for key in baseCookieToSegment.iterkeys():
+for key in sorted(baseCookieToSegment.iterkeys()):
    #print "key1=",key
-    # if key == "[]":
-    #     continue
+    if key == "[]":
+        continue
     #print "key=",key
 
     numCookies += 1
