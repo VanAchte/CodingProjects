@@ -1,3 +1,5 @@
+import sys
+
 lines = []
 baseCookies = []
 newCookies = []
@@ -72,65 +74,108 @@ def mapSegs(segList, cookie, itNum):
             newSegmentToCookie[key].append(cookie)
     return
 
-#evaluator-integration.log
-#evaluator-integration-baseline.log
 
-#file1 = 'evaluator-integration-baseline.log'
-#ile2 = 'evaluator-integration.log'
-file1 = 'baselineSmall.log'
-file2 = 'postFile.log'
+
+# main method
+file1 = ''
+file2 = ''
+if len(sys.argv) > 2:
+    file1 = sys.argv[1]
+    file2 = sys.argv[2]
+else:
+    file1 = 'evaluator-integration-baseline.log'
+    file2 = 'evaluator-integration.log'
+    #file1 = 'baselineSmall.log'
+    #file2 = 'postFile.log'
+
+
 
 itNum = 0
 
-# main method
 print("start")
 setDicts(file1,itNum)
 print("done with file1")
 itNum = 1
 setDicts(file2,itNum)
-print("done")
+print("done with file2")
 
-counter = 0
+numSegs = 0
 missCookies = 0
 addedCookies = 0
 
 for key in baseSegmentToCookie.iterkeys():
-   print "key1=",key
-   counter += 1
+    #print "key1=",key
+    if key == "[]":
+        continue
+    #print "key=",key
 
-   if key in newSegmentToCookie:
-       if baseSegmentToCookie.get(key) == newSegmentToCookie.get(key):
-           continue
+    numSegs += 1
+    # If key is empty, we do not count it as a segment
 
-       #values = baseSegmentToCookie.get(key)
-       #values2 = newSegmentToCookie.get(key)
-#       print "baseValues=",values
- #      print "newValuess=",values2
-       for val in baseSegmentToCookie.get(key):
-           print "val",val
-           if val not in newSegmentToCookie.get(key):
-               missCookies += 1
-               print ("missingCookies=", missCookies)
-
-       for cookie in newSegmentToCookie.get(key):
-            if cookie not in baseSegmentToCookie.get(key):
-        	    print "cookie=", cookie
-        	    addedCookies += 1
-
-               #print "val",val
-
-       #print "values=",values
-counter2 = 0
+    if key in newSegmentToCookie:
+        baseSet = set(baseSegmentToCookie.get(key))
+        newSet = set(newSegmentToCookie.get(key))
+        diff = newSet.difference(baseSet)
+        if len(diff) > 0:
+            addedCookies += 1
+        #print "baseSet=",baseSet
+        #print "newSet=",newSet
+        #print not newSet.issuperset(baseSet)
+        if not newSet.issuperset(baseSet):
+            missCookies += 1
+    else:
+        missCookies += 1
 
 
-for key in sorted(baseCookieToSegment.iterkeys()):
-    counter2 += 1
+numCookies = 0
+missSegs = 0
+addedSegs = 0
+for key in baseCookieToSegment.iterkeys():
+   #print "key1=",key
+    # if key == "[]":
+    #     continue
+    #print "key=",key
 
-print ("missCookies =",missCookies,"/",counter)
-print ("number of segments =", counter)
-print ("number of cookies =", counter2)
-print("addedCookies=", addedCookies)
-print "done again, for real this time"
+    numCookies += 1
+
+    # If key is empty, we do not count it as a segment
+
+    if key in newCookieToSegment:
+        baseSet2 = set(baseCookieToSegment.get(key))
+        newSet2 = set(newCookieToSegment.get(key))
+        diff = newSet2.difference(baseSet2)
+        if len(diff) > 0:
+            addedSegs += 1
+        #print "\tbaseSet=",baseSet2
+        #print "\tnewSet=",newSet2
+        #print "\tdiff=", diff
+        #print not newSet2.issuperset(baseSet2)
+        if not newSet2.issuperset(baseSet2):
+            missSegs += 1
+    else:
+        missSegs += 1
+
+
+
+       #print "diff=", diff
+print "Segments with added cookies:", addedCookies, "/", numSegs
+print "Segments with missing cookies:", missCookies, "/", numSegs
+
+print "Cookies in extra segments:", addedSegs, "/", numCookies
+print "Cookies omitted from segments:", missSegs, "/", numCookies
+
+# print "numCookies=", numCookies
+# print "missSegs=", missSegs
+# print "addedSegs=", addedSegs   
+
+# print "numSegs=", numSegs
+
+
+# print ("missCookies =",missCookies,"/",counter)
+# print ("number of segments =", counter)
+# print ("number of cookies =", counter2)
+# print("addedCookies=", addedCookies)
+print "done"
 #for key in sorted(newSegmentToCookie.iterkeys()):
  #  print "key2=",key
 
