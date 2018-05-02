@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 									 //usleep(2000000);  /* waits 2000ms for stable condition */
 
 	//VideoCapture capture(0);
-	VideoCapture capture("hallway1.mp4");
+	VideoCapture capture("soccer2.mp4");
 	Mat frame;
 	Mat flipped;
 	
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
 		flipped = rotate(frame, 180);
 		//imshow("flipped", flipped);
 		detectLines(flipped, processCount);
+		//detectLines(frame, processCount);
 		processCount++;
 		if (waitKey(20) == 27)
 			break;
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
 
 
 void detectLines(Mat& input, int processCount) {
-	cout << processCount << endl;
+	//cout << processCount << endl;
 	if (input.empty()) {
 		cout << "Error loading the image" << endl;
 		exit(1);
@@ -175,16 +176,13 @@ void detectLines(Mat& input, int processCount) {
 		//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
 		//circle(frame, Point(x2, y2), 5, (0, 255, 0), -1);
 		float angle = atan2(y1 - y2, x1 - x2);
+		
 		//cout << "angle = " << angle << endl;
 		if (x2 - x1 != 0) {
 			int slope = (y2 - y1) / (x2 - x1);
 			//cout << "Slope = " << slope << endl;
 		}
 
-		//line(frame, Point(bestFitLine[0], bestFitLine[1]),
-		//	Point(bestFitLine[2], bestFitLine[3]), Scalar(0, 0, 255), 3, 8);
-		//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
-		//circle(frame, Point(x2, y2), 5, (255, 0, 0), -1);
 
 	}
 
@@ -219,7 +217,7 @@ void detectLines(Mat& input, int processCount) {
 		line(input, topTemp,
 			botTemp, Scalar(0, 255, 0), 3, 8);
 		if ((botTemp.x != 0) && (botTemp.y != 0)) {
-			cout << "botTemp = " << botTemp << "topTemp = " << topTemp << endl;
+			//cout << "botTemp = " << botTemp << "topTemp = " << topTemp << endl;
 			//line(input, topTemp,
 			//botTemp, Scalar(0, 255, 0), 3, 8);
 			int midX = (botTemp.x + topTemp.x) / 2;
@@ -247,17 +245,34 @@ void detectLines(Mat& input, int processCount) {
 			line(input, topTrans,
 				Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
 
+			// Experimental lines, drawn on the line detected, plotting the line onto a 2d graph to get the angle of the line
+
+			line(input, Point(midX - 50, midY),
+				Point(midX + 50, midY), Scalar(0, 0, 0), 3, 8);
+			line(input, Point(midX, midY + 50),
+				Point(midX, midY - 50), Scalar(0, 0, 0), 3, 8);
+
+			float angle = atan2(midY - topTemp.y, midX - topTemp.x);
+			cout << "angleBefore = " << angle << endl;
+			angle = angle * (180 / CV_PI);
+			//angle = angle * (180 / 3.14159265);
+			cout << "angle = " << angle << endl;
+
 			//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
 			//float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
 			//cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
 			//float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
 			//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 			circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
-
+			
 			float degrees = DEG_PER_PIXEL * (midX - 320);
 			cout << "degrees = " << degrees << endl;
-			cout << "degrees servo num = " << degrees * 40 + 1100;
-			//sendToArduino(degrees, 0);
+			int distance = botTemp.x - 320;
+			cout << "distance = " << distance << endl;
+			//cout << "degrees = " << degrees << endl;
+			//cout << "degrees servo num = " << degrees * 40 + 1100;
+			//sendToArduino(distance, degrees);
+			//receiveFromArduino();
 			//getTurningAngle(midX, testAngle, topTemp, botTemp);
 			//waitKey(0);
 		}
