@@ -24,9 +24,9 @@ extern "C" {
 using namespace cv;
 using namespace std;
 
-const Scalar light_green = Scalar(100, 255, 0);
+//const Scalar light_green = Scalar(100, 255, 0);
 const Scalar yellow = Scalar(0, 255, 255);
-const Scalar red = Scalar(0, 0, 255);
+//const Scalar red = Scalar(0, 0, 255);
 int cport_nr = 24; /* /dev/ttyACM0 */
 
 
@@ -34,7 +34,7 @@ void detectLines(Mat& imgOriginal, int processCount);
 double getLength(Point p1, Point p2);
 int getShiftAmount(int x);
 Mat yellowFilter(const Mat& src);
-void getTurningAngle(int midX, int angle, Point top, Point bot);
+
 void sendToArduino(float dist, float deg);
 void receiveFromArduino();
 
@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
 		flipped = rotate(frame, 180);
 		//imshow("flipped", flipped);
 		detectLines(flipped, processCount);
+		imshow("flipped", flipped);
 		//detectLines(frame, processCount);
 		processCount++;
 		if (waitKey(20) == 27)
@@ -83,6 +84,12 @@ int main(int argc, char* argv[]) {
 	
 	capture.release();
 	return 0;
+}
+
+Mat blurImage(Mat input) {
+	Mat blur_input;
+	GaussianBlur(input, blur_input, Size(9, 9), 0, 0);
+	return blur_input;
 }
 
 
@@ -100,28 +107,15 @@ void detectLines(Mat& input, int processCount) {
 	Point topTemp(0, 0);
 	Point botTemp(0, 0);
 
+	Mat input_blur = blurImage(input);
 
 	// Masks image for yellow color
-	Mat yellowOnly = yellowFilter(input);
-
-	//// Draws a line straight down middle of screen as a reference line
-	//line(frame, Point(320, 0),
-	//	Point(320, 480), Scalar(0, 0, 0), 3, 8);
-	//// Draws two lines in prospective straight area
-	//line(frame, Point(220, 0),
-	//	Point(220, 480), Scalar(0, 0, 0), 3, 8);
-	//line(frame, Point(420, 0),
-	//	Point(420, 480), Scalar(0, 0, 0), 3, 8);
+	Mat yellowOnly = yellowFilter(input_blur);
 
 
 	//////////////////////////////////////////////
 	int thresh = 50;
-	Mat input_blur;
-	GaussianBlur(input, input_blur, Size(25, 25), 0, 0);
 	Mat canny_output;
-	//vector<vector<Point>> contours;
-	//vector<Vec4i> hierarchy;
-
 
 	/// Detect edges using canny
 	Canny(yellowOnly, canny_output, thresh, thresh * 2, 3);
@@ -129,25 +123,21 @@ void detectLines(Mat& input, int processCount) {
 	// Create a vector which contains 4 integers in each element (coordinates of the line)
 	vector<Vec4i> lines;
 
-	//float testAngle = atan2(-1 - -1, 2 - 10);
-	//cout << "testAngle = " << testAngle << endl;
+
 	// Set limits on line detection
 	//Good value here
-	//double minLineLength = 80;
 	double minLineLength = 80;
 	double maxLineGap = 5;
 
 	HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
 
 	int numLines = lines.size();
-	//cout << "numLines = " << numLines << endl;
-	double longestLine = 0;
+
 
 	Point highestPoint(0, 0);
 	Point lowestPoint(0, 0);
 
 	for (size_t i = 0; i < numLines; i++) {
-		//cout << lines[i] << endl;
 		int x1 = lines[i][0];
 		int y1 = lines[i][1];
 		int x2 = lines[i][2];
@@ -165,24 +155,6 @@ void detectLines(Mat& input, int processCount) {
 			lowestPoint.y += y1;
 			lowestPoint.x += x1;
 		}
-
-
-		Point a(x1, y1);
-		Point b(x2, y2);
-		double res = norm(a - b);
-		longestLine = res;
-		//line(frame, Point(x1, y1),
-		//Point(x2, y2), Scalar(0, 0, 255), 3, 8);
-		//circle(frame, Point(x1, y1), 5, (0, 0, 255), -1);
-		//circle(frame, Point(x2, y2), 5, (0, 255, 0), -1);
-		float angle = atan2(y1 - y2, x1 - x2);
-		
-		//cout << "angle = " << angle << endl;
-		if (x2 - x1 != 0) {
-			int slope = (y2 - y1) / (x2 - x1);
-			//cout << "Slope = " << slope << endl;
-		}
-
 
 	}
 
@@ -218,45 +190,53 @@ void detectLines(Mat& input, int processCount) {
 			botTemp, Scalar(0, 255, 0), 3, 8);
 		if ((botTemp.x != 0) && (botTemp.y != 0)) {
 			//cout << "botTemp = " << botTemp << "topTemp = " << topTemp << endl;
-			//line(input, topTemp,
-			//botTemp, Scalar(0, 255, 0), 3, 8);
+			line(input, topTemp,
+			botTemp, Scalar(0, 255, 0), 3, 8);
+
+			// Section commented out for now, draws a transposed line into the middle of the image
+
+			/////////////////////////////////////////
 			int midX = (botTemp.x + topTemp.x) / 2;
-			int midY = (botTemp.y + topTemp.y) / 2;
-			circle(input, Point(midX, midY), 5, (0, 0, 0), -1);
+			//int midY = (botTemp.y + topTemp.y) / 2;
+			//circle(input, Point(midX, midY), 5, (0, 0, 0), -1);
 			int shiftAmount = getShiftAmount(midX);
-			int mid = (topTemp.x + shiftAmount + botTemp.x + shiftAmount) / 2;
+			//int mid = (topTemp.x + shiftAmount + botTemp.x + shiftAmount) / 2;
 
-			Point topTrans(topTemp.x + shiftAmount, topTemp.y);
-			Point botTrans(botTemp.x + shiftAmount, botTemp.y);
+			//Point topTrans(topTemp.x + shiftAmount, topTemp.y);
+			//Point botTrans(botTemp.x + shiftAmount, botTemp.y);
 
-			// Each line here is drawn and forms a triangle which we use to calculate the angel we need
-			// to turn to stay on the line
+			//// Each line here is drawn and forms a triangle which we use to calculate the angel we need
+			//// to turn to stay on the line
 
-			// Draws the shifted line onto the middle of the image
-			line(input, botTrans,
-				topTrans, Scalar(255, 255, 0), 3, 8);
+			//// Draws the shifted line onto the middle of the image
+			//line(input, botTrans,
+			//	topTrans, Scalar(255, 255, 0), 3, 8);
 
-			// Draws the line from the middle point of the average line found
-			// and draws from its middle point to the center of the image
-			line(input, Point(midX, midY),
-				Point(320, midY), Scalar(255, 255, 0), 3, 8);
+			//// Draws the line from the middle point of the average line found
+			//// and draws from its middle point to the center of the image
+			//line(input, Point(midX, midY),
+			//	Point(320, midY), Scalar(255, 255, 0), 3, 8);
 
-			// Draws line from top of transposed line to the middle of image
-			line(input, topTrans,
-				Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
+			//// Draws line from top of transposed line to the middle of image
+			//line(input, topTrans,
+			//	Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
+
+
+			//////////////////////////////////////////////////////
+
 
 			// Experimental lines, drawn on the line detected, plotting the line onto a 2d graph to get the angle of the line
 
-			line(input, Point(midX - 50, midY),
-				Point(midX + 50, midY), Scalar(0, 0, 0), 3, 8);
-			line(input, Point(midX, midY + 50),
-				Point(midX, midY - 50), Scalar(0, 0, 0), 3, 8);
+			//line(input, Point(midX - 50, midY),
+			//	Point(midX + 50, midY), Scalar(0, 0, 0), 3, 8);
+			//line(input, Point(midX, midY + 50),
+			//	Point(midX, midY - 50), Scalar(0, 0, 0), 3, 8);
 
-			float angle = atan2(midY - topTemp.y, midX - topTemp.x);
-			cout << "angleBefore = " << angle << endl;
-			angle = angle * (180 / CV_PI);
-			//angle = angle * (180 / 3.14159265);
-			cout << "angle = " << angle << endl;
+			//float angle = atan2(midY - topTemp.y, midX - topTemp.x);
+			//cout << "angleBefore = " << angle << endl;
+			//angle = angle * (180 / CV_PI);
+			////angle = angle * (180 / 3.14159265);
+			//cout << "angle = " << angle << endl;
 
 			//float angle2 = atan2(p1.y - p2.y, p1.x - p2.x);
 			//float angle2 = atan2(midY - topTemp.y, 320 - topTemp.x);
@@ -285,65 +265,6 @@ void detectLines(Mat& input, int processCount) {
 
 }
 
-// Method is a work in progres, may end up being scrapped
-// @@param int midX: the middle of the found lines mid
-void getTurningAngle(int midX, int angle, Point top, Point bot) {
-	// @@ int desiredAngle: set to the desired angle
-	// @@ int desiredMidXVal: ideal mid value, for example, 320 for the middle of the frame
-	int desiredAngle = 0;
-	int desiredMidXVal = 320;
-
-	// Check if the line is in the go straight boundaries
-	if (midX >= 220 && midX <= 420) {
-		//Possible go straight, check the angle
-		if (angle <= 20) {
-			// Good chance of going straight
-			// TODO: Send command to trike to continue course
-			cout << "Go Straight" << endl;
-		}
-		// If the angle is in the center constraints and is between 20 and 30 we assume the
-		// turn will be a slight adjustment. Turn slightly towards the middle of the line detected
-		else if (angle > 20 && angle <= 30) {
-			// If the line is facing towards the middle of the image, example: \ 
-			if ((top.x < bot.x) && midX > 320) {
-				cout << "Slight right turn" << endl;
-			}
-
-			else if ((top.x < bot.x) && midX < 320) {
-
-				cout << "Slight left turn" << endl;
-			}
-		}
-		// If the angle is greater than 30 then a moderate turn is needed
-		else if (angle > 30) {
-			// Moderate turn left if the angle
-			if (top.x < bot.x) {
-				cout << "Moderate turn left" << endl;
-			}
-			else {
-				cout << "Moderate turn right" << endl;
-			}
-		}
-	}
-	// If line is found on the left side of the screen
-	else if (midX < 220) {
-		// If the line is facing to the left side of the screen, example: \ 
-		if (top.x < bot.x) {
-			// Turn left
-			cout << "Turn left" << endl;
-		}
-		else {
-			// Line is facing towards the middle of the screen, example: / 
-			// Possibley turn right in this case
-
-		}
-	}
-	else if (midX > 420) {
-		// If the line is in the right side of the image we are probable going to turn right
-		cout << "Turn right" << endl;
-	}
-
-}
 
 
 
@@ -354,7 +275,7 @@ Mat yellowFilter(const Mat& src) {
 	Mat yellowOnly;
 	Mat src_blur, src_hls;
 
-	GaussianBlur(src, src_blur, Size(25, 25), 0, 0);
+	
 	cvtColor(src_blur, src_hls, CV_BGR2HLS);
 	rectangle(src_hls, Point(0, 0),
 		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
