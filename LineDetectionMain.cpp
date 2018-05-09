@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 									 //usleep(2000000);  /* waits 2000ms for stable condition */
 
 	//VideoCapture capture(0);
-	VideoCapture capture("soccer2.mp4");
+	VideoCapture capture("soccer7.mp4");
 	Mat frame;
 	Mat flipped;
 	
@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 
 Mat blurImage(Mat input) {
 	Mat blur_input;
-	GaussianBlur(input, blur_input, Size(9, 9), 0, 0);
+	GaussianBlur(input, blur_input, Size(3, 3), 0, 0);
 	return blur_input;
 }
 
@@ -273,10 +273,10 @@ Mat yellowFilter(const Mat& src) {
 	assert(src.type() == CV_8UC3);
 
 	Mat yellowOnly;
-	Mat src_blur, src_hls;
+	Mat src_hls;
 
 	
-	cvtColor(src_blur, src_hls, CV_BGR2HLS);
+	cvtColor(src, src_hls, CV_BGR2HLS);
 	rectangle(src_hls, Point(0, 0),
 		Point(640, 240), Scalar(0, 0, 0), CV_FILLED, 8);
 
