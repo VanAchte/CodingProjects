@@ -30,7 +30,7 @@ const Scalar yellow = Scalar(0, 255, 255);
 int cport_nr = 24; /* /dev/ttyACM0 */
 
 
-void detectLines(Mat& imgOriginal, int processCount);
+void detectLines(Mat& imgOriginal, int processCount, KalmanFilter &kf, Mat& state, Mat& meas, bool &found);
 double getLength(Point p1, Point p2);
 int getShiftAmount(int x);
 Mat yellowFilter(const Mat& src);
@@ -60,10 +60,61 @@ int main(int argc, char* argv[]) {
 	//Sleep(2000000);
 									 //usleep(2000000);  /* waits 2000ms for stable condition */
 
+
+
+
+	int stateSize = 6;
+	int measSize = 4;
+
+	cv::KalmanFilter kf(stateSize, measSize);
+
+	cv::Mat state(stateSize, 1, CV_32F);  // [x,y,v_x,v_y,w,h]
+	cv::Mat meas(measSize, 1, CV_32F);    // [z_x,z_y,z_w,z_h]
+										  // [E_x,E_y,E_v_x,E_v_y,E_w,E_h]
+
+										  // Transition State Matrix A
+										  // Note: set dT at each processing step!
+										  // [ 1 0 dT 0  0 0 ]
+										  // [ 0 1 0  dT 0 0 ]
+										  // [ 0 0 1  0  0 0 ]
+										  // [ 0 0 0  1  0 0 ]
+										  // [ 0 0 0  0  1 0 ]
+										  // [ 0 0 0  0  0 1 ]
+	cv::setIdentity(kf.transitionMatrix);
+
+	// Measure Matrix H
+	// [ 1 0 0 0 0 0 ]
+	// [ 0 1 0 0 0 0 ]
+	// [ 0 0 0 0 1 0 ]
+	// [ 0 0 0 0 0 1 ]
+	kf.measurementMatrix = cv::Mat::zeros(measSize, stateSize, CV_32F);
+	kf.measurementMatrix.at<float>(0) = 1.0f;
+	kf.measurementMatrix.at<float>(7) = 1.0f;
+	kf.measurementMatrix.at<float>(16) = 1.0f;
+	kf.measurementMatrix.at<float>(23) = 1.0f;
+
+	// Process Noise Covariance Matrix Q
+	// [ Ex   0   0     0     0    0  ]
+	// [ 0    Ey  0     0     0    0  ]
+	// [ 0    0   Ev_x  0     0    0  ]
+	// [ 0    0   0     Ev_y  0    0  ]	cout << "Img center = " << imgXCenter << endl;
+	// [ 0    0   0     0     Ew   0  ]
+	// [ 0    0   0     0     0    Eh ]
+	kf.processNoiseCov.at<float>(0) = 1e-2;
+	kf.processNoiseCov.at<float>(7) = 1e-2;
+	kf.processNoiseCov.at<float>(14) = 5.0f;
+	kf.processNoiseCov.at<float>(21) = 5.0f;
+	kf.processNoiseCov.at<float>(28) = 1e-2;
+	kf.processNoiseCov.at<float>(35) = 1e-2;
+
+	// Measures Noise Covariance Matrix R
+	cv::setIdentity(kf.measurementNoiseCov, cv::Scalar(1e-1));
 	//VideoCapture capture(0);
 	VideoCapture capture("soccer7.mp4");
 	Mat frame;
 	Mat flipped;
+	double ticks = 0;
+	bool found = false;
 	
 
 	// If the video is upside down, we use this to flip it rightside up
@@ -71,11 +122,37 @@ int main(int argc, char* argv[]) {
 	//cv::Flip(frame, flipMode = -1)
 	int processCount = 0;
 	while (true) {
+		double precTicks = ticks;
+		ticks = (double)getTickCount();
+		double dT = (ticks - precTicks) / getTickFrequency();
+
+
 		capture >> frame;
 		flipped = rotate(frame, 180);
 		//imshow("flipped", flipped);
-		detectLines(flipped, processCount);
-		imshow("flipped", flipped);
+
+		if (found) {
+			kf.transitionMatrix.at<float>(2) = dT;
+			kf.transitionMatrix.at<float>(9) = dT;
+			state = kf.predict();
+
+			cv::Rect predRect;
+			predRect.width = state.at<float>(4);
+			predRect.height = state.at<float>(5);
+			predRect.x = state.at<float>(0) - predRect.width / 2;
+			predRect.y = state.at<float>(1) - predRect.height / 2;
+
+			cv::Point center;
+			center.x = state.at<float>(0);
+			center.y = state.at<float>(1);
+			float degrees = DEG_PER_PIXEL * (center.x - 320);
+			cout << "Predicted degrees " << degrees << endl;
+		}
+
+
+		//detectLines(frame, processCount, kf, state, meas, found);
+		detectLines(flipped, processCount, kf, state, meas, found);
+		//imshow("flipped", flipped);
 		//detectLines(frame, processCount);
 		processCount++;
 		if (waitKey(20) == 27)
@@ -94,7 +171,7 @@ Mat blurImage(Mat input) {
 
 
 
-void detectLines(Mat& input, int processCount) {
+void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat& meas, bool &found) {
 	//cout << processCount << endl;
 	if (input.empty()) {
 		cout << "Error loading the image" << endl;
@@ -107,18 +184,18 @@ void detectLines(Mat& input, int processCount) {
 	Point topTemp(0, 0);
 	Point botTemp(0, 0);
 
-	Mat input_blur = blurImage(input);
+	//Mat input_blur = blurImage(input);
 
 	// Masks image for yellow color
-	Mat yellowOnly = yellowFilter(input_blur);
-
-
+	Mat yellowOnly = yellowFilter(input);
+	Mat yellowBlur = blurImage(yellowOnly);
+	imshow("yellowBlur", yellowBlur);
 	//////////////////////////////////////////////
 	int thresh = 50;
 	Mat canny_output;
 
 	/// Detect edges using canny
-	Canny(yellowOnly, canny_output, thresh, thresh * 2, 3);
+	Canny(yellowBlur, canny_output, thresh, thresh * 2, 3);
 
 	// Create a vector which contains 4 integers in each element (coordinates of the line)
 	vector<Vec4i> lines;
@@ -197,7 +274,7 @@ void detectLines(Mat& input, int processCount) {
 
 			/////////////////////////////////////////
 			int midX = (botTemp.x + topTemp.x) / 2;
-			//int midY = (botTemp.y + topTemp.y) / 2;
+			int midY = (botTemp.y + topTemp.y) / 2;
 			//circle(input, Point(midX, midY), 5, (0, 0, 0), -1);
 			int shiftAmount = getShiftAmount(midX);
 			//int mid = (topTemp.x + shiftAmount + botTemp.x + shiftAmount) / 2;
@@ -245,10 +322,57 @@ void detectLines(Mat& input, int processCount) {
 			//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
 			circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
 			
+			int length = getLength(topTemp, botTemp);
+			// update measurement matrix
+			meas.at<float>(0) = midX;
+			meas.at<float>(1) = midY;
+			meas.at<float>(2) = 3;
+			meas.at<float>(3) = length;
+
+			if (!found) // First detection!
+			{
+				// >>>> Initialization
+				kf.errorCovPre.at<float>(0) = 1; // px
+				kf.errorCovPre.at<float>(7) = 1; // px
+				kf.errorCovPre.at<float>(14) = 1;
+				kf.errorCovPre.at<float>(21) = 1;
+				kf.errorCovPre.at<float>(28) = 1; // px
+				kf.errorCovPre.at<float>(35) = 1; // px
+
+				state.at<float>(0) = meas.at<float>(0);
+				state.at<float>(1) = meas.at<float>(1);
+				state.at<float>(2) = 0;
+				state.at<float>(3) = 0;
+				state.at<float>(4) = meas.at<float>(2);
+				state.at<float>(5) = meas.at<float>(3);
+				// <<<< Initialization
+
+				kf.statePost = state;
+
+				found = true;
+			}
+			else { // Kalman Correction
+				kf.correct(meas);
+			}
+
+			float offset = 90;
+			// pixPerDegree was calculated by taking the 180 degrees of turning and normalizing it with the amount of
+			// pixels seen in the image taken by the raspberry pi, which is 640 * 480. So by dividing 640 with 180 we get 3.55,
+			// the amount of pixels per degree
+			double pixPerDegree = 3.55;
+			if (botTemp.x < 320) {
+				offset = 180 - (botTemp.x / pixPerDegree);
+			}
+			else if (botTemp.x > 320) {
+				offset = 180 - (botTemp.x / pixPerDegree);
+			}
+
+
 			float degrees = DEG_PER_PIXEL * (midX - 320);
 			cout << "degrees = " << degrees << endl;
 			int distance = botTemp.x - 320;
 			cout << "distance = " << distance << endl;
+
 			//cout << "degrees = " << degrees << endl;
 			//cout << "degrees servo num = " << degrees * 40 + 1100;
 			//sendToArduino(distance, degrees);
@@ -274,7 +398,7 @@ Mat yellowFilter(const Mat& src) {
 
 	Mat yellowOnly;
 	Mat src_hls;
-
+	Mat imgThreshLow, imgThreshHigh, imgThreshSmooth;
 	
 	cvtColor(src, src_hls, CV_BGR2HLS);
 	rectangle(src_hls, Point(0, 0),
@@ -282,8 +406,18 @@ Mat yellowFilter(const Mat& src) {
 
 	//inRange(src_hls, Scalar(20, 120, 80), Scalar(45, 200, 255), yellowOnly);
 	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), yellowOnly);
-	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), yellowOnly);
-	return yellowOnly;
+	
+	//good inrange for video
+	inRange(src_hls, Scalar(0, 80, 200), Scalar(40, 255, 255), imgThreshLow);
+
+	//test inrange
+	//inRange(src_hls, Scalar(20, 100, 100), Scalar(30, 255, 255), imgThreshLow);
+	//inRange(src_hls, Scalar(184, 135, 117), Scalar(189, 255, 255), imgThreshHigh);
+
+	Mat imgThresh = imgThreshLow;// | imgThreshHigh;
+	erode(imgThresh, imgThreshSmooth, getStructuringElement(MORPH_RECT, Size(3, 3)));
+	dilate(imgThreshSmooth, imgThreshSmooth, getStructuringElement(MORPH_RECT, Size(3, 3)));
+	return imgThreshSmooth;
 }
 
 int getShiftAmount(int x) {
