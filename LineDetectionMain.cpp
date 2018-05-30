@@ -129,7 +129,7 @@ int main(int argc, char* argv[]) {
 
 		capture >> frame;
 		flipped = rotate(frame, 180);
-		//imshow("flipped", flipped);
+		imshow("flipped", flipped);
 
 		if (found) {
 			kf.transitionMatrix.at<float>(2) = dT;
@@ -152,6 +152,8 @@ int main(int argc, char* argv[]) {
 
 		//detectLines(frame, processCount, kf, state, meas, found);
 		detectLines(flipped, processCount, kf, state, meas, found);
+		if (cv::waitKey(1) == 'p')
+			while (cv::waitKey(1) != 'p');
 		//imshow("flipped", flipped);
 		//detectLines(frame, processCount);
 		processCount++;
@@ -188,15 +190,17 @@ void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat
 
 	// Masks image for yellow color
 	Mat yellowOnly = yellowFilter(input);
+	imshow("yellowOnly", yellowOnly);
 	Mat yellowBlur = blurImage(yellowOnly);
 	imshow("yellowBlur", yellowBlur);
 	//////////////////////////////////////////////
-	int thresh = 50;
+	int thresh = 30;
 	Mat canny_output;
 
 	/// Detect edges using canny
-	Canny(yellowBlur, canny_output, thresh, thresh * 2, 3);
+	//Canny(yellowBlur, canny_output, thresh, thresh * 2, 3);
 
+	//imshow("canny", canny_output);
 	// Create a vector which contains 4 integers in each element (coordinates of the line)
 	vector<Vec4i> lines;
 
@@ -206,7 +210,7 @@ void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat
 	double minLineLength = 80;
 	double maxLineGap = 5;
 
-	HoughLinesP(yellowOnly, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
+	HoughLinesP(yellowBlur, lines, 1, CV_PI / 180, 80, minLineLength, maxLineGap);
 
 	int numLines = lines.size();
 
@@ -219,7 +223,8 @@ void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat
 		int y1 = lines[i][1];
 		int x2 = lines[i][2];
 		int y2 = lines[i][3];
-
+		line(input, Point(x1,y1),
+			Point(x2,y2), Scalar(0, 0, 255), 3, 8);
 		if (y1 < y2) {
 			highestPoint.y += y1;
 			highestPoint.x += x1;
@@ -279,24 +284,24 @@ void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat
 			int shiftAmount = getShiftAmount(midX);
 			//int mid = (topTemp.x + shiftAmount + botTemp.x + shiftAmount) / 2;
 
-			//Point topTrans(topTemp.x + shiftAmount, topTemp.y);
-			//Point botTrans(botTemp.x + shiftAmount, botTemp.y);
+			Point topTrans(topTemp.x + shiftAmount, topTemp.y);
+			Point botTrans(botTemp.x + shiftAmount, botTemp.y);
 
 			//// Each line here is drawn and forms a triangle which we use to calculate the angel we need
 			//// to turn to stay on the line
 
 			//// Draws the shifted line onto the middle of the image
-			//line(input, botTrans,
-			//	topTrans, Scalar(255, 255, 0), 3, 8);
+			line(input, botTrans,
+				topTrans, Scalar(255, 255, 0), 3, 8);
 
 			//// Draws the line from the middle point of the average line found
 			//// and draws from its middle point to the center of the image
-			//line(input, Point(midX, midY),
-			//	Point(320, midY), Scalar(255, 255, 0), 3, 8);
+			line(input, Point(midX, midY),
+				Point(320, midY), Scalar(255, 255, 0), 3, 8);
 
 			//// Draws line from top of transposed line to the middle of image
-			//line(input, topTrans,
-			//	Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
+			line(input, topTrans,
+				Point(320, topTrans.y), Scalar(255, 255, 0), 3, 8);
 
 
 			//////////////////////////////////////////////////////
@@ -320,7 +325,7 @@ void detectLines(Mat& input, int processCount, KalmanFilter &kf, Mat& state, Mat
 			//cout << "angle2 = " << angle2 * 180 / CV_PI << endl;
 			//float angle = angleBetween(Point(320, midY), Point(topTemp.x + shiftAmount, topTemp.y));
 			//circle(frame, Point(320, topAvg.y), 10, (127, 127, 127), -1);
-			circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
+			//circle(input, Point(topTemp.x + shiftAmount, topTemp.y), 5, (255, 255, 127), -1);
 			
 			int length = getLength(topTemp, botTemp);
 			// update measurement matrix
